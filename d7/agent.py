@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 import requests
@@ -7,7 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# отключаем spam warning про SSL
 urllib3.disable_warnings(
     urllib3.exceptions.InsecureRequestWarning
 )
@@ -25,15 +25,11 @@ class Agent:
             "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
         )
 
+        self.history_file = "history.json"
+
         self.access_token = self._get_access_token()
 
-        # история сессии
-        self.messages = [
-            {
-                "role": "system",
-                "content": "Ты полезный AI-ассистент."
-            }
-        ]
+        self.messages = self._load_history()
 
     def _get_access_token(self):
         headers = {
@@ -59,8 +55,36 @@ class Agent:
 
         return data["access_token"]
 
+    def _load_history(self):
+        if os.path.exists(self.history_file):
+            with open(
+                self.history_file,
+                "r",
+                encoding="utf-8"
+            ) as file:
+                return json.load(file)
+
+        return [
+            {
+                "role": "system",
+                "content": "Ты полезный AI-ассистент."
+            }
+        ]
+
+    def _save_history(self):
+        with open(
+            self.history_file,
+            "w",
+            encoding="utf-8"
+        ) as file:
+            json.dump(
+                self.messages,
+                file,
+                ensure_ascii=False,
+                indent=2
+            )
+
     def ask(self, user_message):
-        # сохраняем сообщение пользователя
         self.messages.append({
             "role": "user",
             "content": user_message
@@ -92,10 +116,11 @@ class Agent:
             data["choices"][0]["message"]["content"]
         )
 
-        # сохраняем ответ модели
         self.messages.append({
             "role": "assistant",
             "content": assistant_message
         })
+
+        self._save_history()
 
         return assistant_message
