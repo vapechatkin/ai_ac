@@ -1,256 +1,293 @@
-# memory.py
-#
-# Три слоя памяти с явными жизненными циклами:
-#
-#   ShortTermMemory  — stm.json
-#     Жизненный цикл: пока жив терминал (процесс).
-#     Содержит: основная проблема + предложенные решения с аргументацией.
-#     Автоматически обновляется после каждого хода (LLM-экстракция).
-#     Пишется в JSON при каждом обновлении. Очищается при завершении процесса
-#     (файл удаляется при старте следующей сессии).
-#
-#   WorkingMemory    — working_memory.json
-#     Жизненный цикл: накапливается между сессиями.
-#     Структура: MAP {задача → {что сделано, статус, дата}}.
-#     При старте спрашивает: продолжить старую задачу или новую?
-#
-#   LongTermMemory   — long_term_memory.md
-#     Жизненный цикл: постоянная.
-#     Содержит: профиль (имя/должность/возраст), стек, источники.
-#     Перезаписывается только при отсутствии или по запросу пользователя.
+"""
+Three-layer memory model:
 
+  SHORT-TERM  — current dialog (in-process list, gone after exit)
+  WORKING     — task records stored as JSON entities (workflow.json)
+  LONG-TERM   — structured user profile (profile.md)
+"""
+
+from __future__ import annotations
 import json
-import os
-import re
+import uuid
 from datetime import datetime
+from pathlib import Path
 
-STM_FILE = "current_dialog.json"
-WM_FILE  = "workflow.json"
-LTM_FILE = "profile.md"
+DIR = Path(__file__).parent
+WORKFLOW_FILE = DIR / "workflow.json"
+PROFILE_FILE  = DIR / "profile.md"
+
+# State machine: which transitions are allowed
+VALID_TRANSITIONS: dict[str, list[str]] = {
+    "planning":    ["in-progress"],
+    "in-progress": ["review", "planning"],
+    "review":      ["done", "in-progress"],
+    "done":        [],
+}
+TASK_STATUSES = tuple(VALID_TRANSITIONS.keys())
+
+PROFILE_FIELDS: dict[str, str] = {
+    "name":       "Имя",
+    "occupation": "Род деятельности",
+    "grade":      "Грейд",
+    "stack":      "Стек",
+}
 
 
-# ─────────────────────────────────────────── ShortTermMemory
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _now_iso() -> str:
+    return datetime.now().isoformat(timespec="seconds")
+
+def _now_time() -> str:
+    return datetime.now().strftime("%H:%M")
+
+def _new_task(name: str) -> dict:
+    return {
+        "id":         uuid.uuid4().hex[:8],
+        "name":       name,
+        "status":     "planning",
+        "summary":    "",
+        "notes":      [],          # list of {"time": "HH:MM", "text": "..."}
+        "created_at": _now_iso(),
+        "updated_at": _now_iso(),
+    }
+
+
+# ── Short-term (current session only) ─────────────────────────────────────────
 
 class ShortTermMemory:
-    """
-    Саммари текущей сессии: проблема + решения с аргументами.
-    Пишется в stm.json при каждом обновлении.
-    Удаляется при старте новой сессии (start_session очищает файл).
-    """
+    def __init__(self) -> None:
+        self._messages: list[dict] = []
 
-    def __init__(self, path: str = STM_FILE):
-        self._path     = path
-        self.problem:   str        = ""
-        self.solutions: list[dict] = []
+    def add(self, role: str, content) -> None:
+        self._messages.append({"role": role, "content": content})
+
+    def get_messages(self) -> list[dict]:
+        return list(self._messages)
 
     def clear(self) -> None:
-        """Вызывается при старте сессии — предыдущая STM не нужна."""
-        self.problem   = ""
-        self.solutions = []
-        if os.path.exists(self._path):
-            os.remove(self._path)
+        self._messages.clear()
 
-    def update(self, problem: str, solutions: list[dict]) -> None:
-        self.problem   = problem
-        self.solutions = solutions
-        with open(self._path, "w", encoding="utf-8") as f:
-            json.dump({"problem": self.problem, "solutions": self.solutions},
-                      f, ensure_ascii=False, indent=2)
-
-    def is_empty(self) -> bool:
-        return not self.problem
-
-    def to_prompt_block(self) -> str:
-        if self.is_empty():
-            return ""
-        lines = ["[КРАТКОСРОЧНАЯ ПАМЯТЬ — текущий диалог]",
-                 f"Проблема: {self.problem}"]
-        if self.solutions:
-            lines.append("Предложенные решения:")
-            for s in self.solutions:
-                lines.append(f"  • {s['solution']}")
-                if s.get("arguments"):
-                    lines.append(f"    Аргументы: {s['arguments']}")
-        return "\n".join(lines)
-
-    def summary(self) -> dict:
-        return {
-            "problem":   self.problem[:60] + "..." if len(self.problem) > 60 else self.problem,
-            "solutions": len(self.solutions),
-        }
+    def summary(self) -> str:
+        n = len(self._messages)
+        if n == 0:
+            return "(пусто)"
+        last = self._messages[-1]
+        content = last["content"]
+        if isinstance(content, str):
+            text = content
+        else:
+            text = next(
+                (b.get("text") or b.get("content") or "" for b in content
+                 if b.get("type") in ("text", "tool_result")),
+                "[tool_use]",
+            )
+        snippet = (text or "")[:80].replace("\n", " ")
+        return f"{n} сообщ. | последнее [{last['role']}]: {snippet}…"
 
 
-# ─────────────────────────────────────────── WorkingMemory
+# ── Working memory (workflow.json) ─────────────────────────────────────────────
 
 class WorkingMemory:
     """
-    MAP задача → {что сделано, статус, даты}.
-    Накапливается между сессиями в working_memory.json.
+    Stores tasks as JSON objects in workflow.json.
+
+    Schema:
+    {
+      "current": "<task id>",
+      "tasks": [
+        {
+          "id":         "a1b2c3d4",
+          "name":       "Название задачи",
+          "status":     "planning | in-progress | review | done",
+          "summary":    "Краткое описание состояния",
+          "notes":      [{"time": "14:22", "text": "текст заметки"}],
+          "created_at": "2026-06-18T10:00:00",
+          "updated_at": "2026-06-18T14:22:00"
+        }
+      ]
+    }
+
+    Status transitions (state machine):
+      planning → in-progress
+      in-progress → review | planning
+      review → done | in-progress
+      done → (terminal)
     """
 
-    def __init__(self, path: str = WM_FILE):
-        self._path        = path
-        self.tasks:        dict[str, dict] = {}
-        self.current_task: str             = ""
-        self._load()
+    def _load(self) -> dict:
+        if WORKFLOW_FILE.exists():
+            try:
+                return json.loads(WORKFLOW_FILE.read_text("utf-8"))
+            except json.JSONDecodeError:
+                pass
+        return {"current": "", "tasks": []}
 
-    def _load(self) -> None:
-        if not os.path.exists(self._path):
-            return
-        try:
-            data = json.loads(open(self._path, encoding="utf-8").read())
-            self.tasks        = data.get("tasks", {})
-            self.current_task = data.get("current_task", "")
-        except (json.JSONDecodeError, KeyError):
-            pass
+    def _save(self, data: dict) -> None:
+        WORKFLOW_FILE.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2), "utf-8"
+        )
 
-    def save(self) -> None:
-        with open(self._path, "w", encoding="utf-8") as f:
-            json.dump({"tasks": self.tasks, "current_task": self.current_task},
-                      f, ensure_ascii=False, indent=2)
+    def _find(self, data: dict, task_id: str) -> dict | None:
+        return next((t for t in data["tasks"] if t["id"] == task_id), None)
 
-    def has_tasks(self) -> bool:
-        return bool(self.tasks)
+    def _find_by_name(self, data: dict, name: str) -> dict | None:
+        return next((t for t in data["tasks"] if t["name"] == name), None)
 
-    def task_names(self) -> list[str]:
-        return list(self.tasks)
+    # Public API ---------------------------------------------------------------
 
-    def new_task(self, name: str) -> None:
-        self.tasks[name] = {
-            "done":       [],
-            "status":     "в процессе",
-            "started_at": datetime.now().isoformat(timespec="seconds"),
-            "updated_at": datetime.now().isoformat(timespec="seconds"),
-        }
-        self.current_task = name
-        self.save()
+    def get_current_task(self) -> dict | None:
+        data = self._load()
+        return self._find(data, data["current"])
 
-    def resume_task(self, name: str) -> None:
-        if name not in self.tasks:
-            raise KeyError(f"Задача «{name}» не найдена")
-        self.current_task = name
-        self.tasks[name]["status"]     = "в процессе"
-        self.tasks[name]["updated_at"] = datetime.now().isoformat(timespec="seconds")
-        self.save()
+    def get_tasks(self) -> list[dict]:
+        return self._load()["tasks"]
 
-    def add_done(self, item: str) -> None:
-        if not self.current_task:
-            return
-        self.tasks[self.current_task]["done"].append(item)
-        self.tasks[self.current_task]["updated_at"] = \
-            datetime.now().isoformat(timespec="seconds")
-        self.save()
+    def get_active_tasks(self) -> list[dict]:
+        return [t for t in self.get_tasks() if t["status"] != "done"]
 
-    def close_task(self) -> None:
-        if not self.current_task:
-            return
-        self.tasks[self.current_task]["status"]     = "завершена"
-        self.tasks[self.current_task]["updated_at"] = \
-            datetime.now().isoformat(timespec="seconds")
-        self.current_task = ""
-        self.save()
+    def add_task(self, name: str) -> str:
+        """Create a new task, set it as current. Returns error or ''."""
+        data = self._load()
+        if self._find_by_name(data, name):
+            return f"Задача '{name}' уже существует"
+        task = _new_task(name)
+        data["tasks"].append(task)
+        data["current"] = task["id"]
+        self._save(data)
+        return ""
 
-    def to_prompt_block(self) -> str:
-        if not self.tasks:
-            return ""
-        lines = ["[РАБОЧАЯ ПАМЯТЬ — задачи]"]
-        for name, info in self.tasks.items():
-            marker = "▶" if name == self.current_task else "○"
-            lines.append(f"  {marker} {name} [{info['status']}]")
-            for done_item in info["done"][-5:]:  # последние 5 пунктов
-                lines.append(f"      ✓ {done_item}")
+    def set_current(self, name: str) -> str:
+        data = self._load()
+        task = self._find_by_name(data, name)
+        if not task:
+            return f"Задача '{name}' не найдена"
+        data["current"] = task["id"]
+        self._save(data)
+        return ""
+
+    def set_status(self, new_status: str) -> str:
+        if new_status not in VALID_TRANSITIONS:
+            return f"Неизвестный статус '{new_status}'. Доступны: {', '.join(TASK_STATUSES)}"
+        data = self._load()
+        task = self._find(data, data.get("current", ""))
+        if not task:
+            return "Нет текущей задачи"
+        old_status = task["status"]
+        if new_status not in VALID_TRANSITIONS[old_status]:
+            allowed = VALID_TRANSITIONS[old_status]
+            if not allowed:
+                return f"Задача уже завершена (статус '{old_status}'), переход невозможен"
+            return (
+                f"Переход {old_status} → {new_status} недопустим. "
+                f"Из '{old_status}' можно перейти в: {', '.join(allowed)}"
+            )
+        task["status"] = new_status
+        task["updated_at"] = _now_iso()
+        self._save(data)
+        return ""
+
+    def set_summary(self, text: str) -> str:
+        data = self._load()
+        task = self._find(data, data.get("current", ""))
+        if not task:
+            return "Нет текущей задачи"
+        task["summary"] = text
+        task["updated_at"] = _now_iso()
+        self._save(data)
+        return ""
+
+    def add_note(self, note: str) -> str:
+        data = self._load()
+        task = self._find(data, data.get("current", ""))
+        if not task:
+            return "Нет текущей задачи. Создайте: /task new <название>"
+        task["notes"].append({"time": _now_time(), "text": note})
+        task["updated_at"] = _now_iso()
+        self._save(data)
+        return ""
+
+    def valid_transitions_for_current(self) -> list[str]:
+        task = self.get_current_task()
+        if not task:
+            return []
+        return VALID_TRANSITIONS[task["status"]]
+
+    def to_prompt_text(self) -> str:
+        data = self._load()
+        tasks = data["tasks"]
+        if not tasks:
+            return "(нет задач)"
+        lines = []
+        for t in tasks:
+            marker = "→" if t["id"] == data["current"] else " "
+            lines.append(f"{marker} [{t['status']}] {t['name']}")
+            if t["summary"]:
+                lines.append(f"    Саммари: {t['summary']}")
+            for n in t["notes"]:
+                lines.append(f"    - [{n['time']}] {n['text']}")
         return "\n".join(lines)
 
-    def current_task_block(self) -> str:
-        if not self.current_task:
-            return ""
-        info  = self.tasks[self.current_task]
-        lines = [f"[ТЕКУЩАЯ ЗАДАЧА: {self.current_task}]"]
-        lines.append(f"Статус: {info['status']}")
-        if info["done"]:
-            lines.append("Что сделано:")
-            for item in info["done"]:
-                lines.append(f"  ✓ {item}")
-        return "\n".join(lines)
-
-    def summary(self) -> dict:
-        return {
-            "tasks":        list(self.tasks),
-            "current_task": self.current_task or "—",
-        }
+    def summary(self) -> str:
+        data = self._load()
+        tasks = data["tasks"]
+        active = [t for t in tasks if t["status"] != "done"]
+        cur = self._find(data, data.get("current", ""))
+        cur_info = f"[{cur['status']}] {cur['name']}" if cur else "нет"
+        return f"current={cur_info} | active={len(active)}/{len(tasks)}"
 
 
-# ─────────────────────────────────────────── LongTermMemory
+# ── Long-term memory (profile.md) ─────────────────────────────────────────────
 
 class LongTermMemory:
     """
-    Профиль пользователя в Markdown.
-    Перезаписывается только при отсутствии или по запросу пользователя.
+    profile.md structure:
+
+        # Profile
+
+        Имя: Виктор
+        Род деятельности: Backend-разработчик
+        Грейд: Middle
+        Стек: Python, FastAPI, PostgreSQL
     """
 
-    REQUIRED = ["name", "role", "age", "stack"]
+    def load(self) -> dict[str, str]:
+        data = {k: "" for k in PROFILE_FIELDS}
+        if not PROFILE_FILE.exists():
+            return data
+        for line in PROFILE_FILE.read_text("utf-8").splitlines():
+            for key, label in PROFILE_FIELDS.items():
+                prefix = f"{label}: "
+                if line.startswith(prefix):
+                    data[key] = line[len(prefix):].strip()
+        return data
 
-    def __init__(self, path: str = LTM_FILE):
-        self._path   = path
-        self.name:    str = ""
-        self.role:    str = ""
-        self.age:     str = ""
-        self.stack:   str = ""
-        self.sources: str = ""
-        self._load()
+    def _save(self, data: dict[str, str]) -> None:
+        lines = ["# Profile", ""]
+        for key, label in PROFILE_FIELDS.items():
+            lines.append(f"{label}: {data.get(key, '')}")
+        PROFILE_FILE.write_text("\n".join(lines) + "\n", "utf-8")
 
-    def _load(self) -> None:
-        if not os.path.exists(self._path):
-            return
-        text = open(self._path, encoding="utf-8").read()
+    def set_field(self, key: str, value: str) -> str:
+        if key not in PROFILE_FIELDS:
+            return f"Неизвестное поле. Доступны: {', '.join(PROFILE_FIELDS)}"
+        data = self.load()
+        data[key] = value
+        self._save(data)
+        return ""
 
-        def field(label: str) -> str:
-            m = re.search(rf"\*\*{label}:\*\*\s*(.+)", text)
-            return m.group(1).strip() if m else ""
+    def is_complete(self) -> bool:
+        return all(v.strip() for v in self.load().values())
 
-        def section(header: str) -> str:
-            m = re.search(rf"## {header}\n(.*?)(?=\n## |\Z)", text, re.DOTALL)
-            return m.group(1).strip() if m else ""
+    def to_prompt_text(self) -> str:
+        data = self.load()
+        return "\n".join(
+            f"{label}: {data[key] or '(не указано)'}"
+            for key, label in PROFILE_FIELDS.items()
+        )
 
-        self.name    = field("Имя")
-        self.role    = field("Должность")
-        self.age     = field("Возраст")
-        self.stack   = section("Стек")
-        self.sources = section("Источники")
-
-    def save(self) -> None:
-        lines = ["# Профиль пользователя", ""]
-        if self.name:  lines.append(f"**Имя:** {self.name}")
-        if self.role:  lines.append(f"**Должность:** {self.role}")
-        if self.age:   lines.append(f"**Возраст:** {self.age}")
-        if self.stack:
-            lines += ["", "## Стек", self.stack]
-        if self.sources:
-            lines += ["", "## Источники", self.sources]
-        with open(self._path, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines) + "\n")
-
-    def exists(self) -> bool:
-        return os.path.exists(self._path)
-
-    def missing_fields(self) -> list[str]:
-        mapping = {"name": "имя", "role": "должность",
-                   "age": "возраст", "stack": "стек"}
-        return [mapping[f] for f in self.REQUIRED if not getattr(self, f)]
-
-    def to_prompt_block(self) -> str:
-        lines = ["[ДОЛГОСРОЧНАЯ ПАМЯТЬ — профиль]"]
-        if self.name:    lines.append(f"Имя: {self.name}")
-        if self.role:    lines.append(f"Должность: {self.role}")
-        if self.age:     lines.append(f"Возраст: {self.age}")
-        if self.stack:   lines.append(f"Стек: {self.stack}")
-        if self.sources: lines.append(f"Предпочтительные источники: {self.sources}")
-        return "\n".join(lines)
-
-    def summary(self) -> dict:
-        return {
-            "name":    self.name or "—",
-            "role":    self.role or "—",
-            "stack":   self.stack[:40] + "..." if len(self.stack) > 40 else self.stack or "—",
-            "sources": bool(self.sources),
-        }
+    def summary(self) -> str:
+        data = self.load()
+        filled = sum(1 for v in data.values() if v.strip())
+        name = data.get("name") or "?"
+        return f"name={name} | {filled}/{len(PROFILE_FIELDS)} полей заполнено"

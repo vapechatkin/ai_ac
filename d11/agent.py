@@ -1,314 +1,555 @@
-# agent.py
-#
-# Агент с явной моделью памяти.
-#
-# Старт сессии:
-#   1. Загружает все три слоя памяти.
-#   2. Если LTM отсутствует или неполная — спрашивает пользователя.
-#   3. Если в WM есть незавершённые задачи — предлагает продолжить.
-#   4. Строит system prompt из всех слоёв.
-#
-# Каждый ход:
-#   - STM обновляется через LLM-экстракцию (проблема + решения).
-#   - WM обновляется явными вызовами add_done().
-#
-# Конец сессии (end_session):
-#   - STM очищается.
-#   - WM сохраняется.
-#   - LTM остаётся без изменений (если пользователь не попросил обновить).
+"""
+CLI-агент с явной трёхслойной моделью памяти и tool use.
 
+Слои памяти:
+  SHORT-TERM  — текущий диалог (в памяти процесса, сбрасывается при выходе)
+  WORKING     — задачи со статусами и заметками (workflow.md)
+  LONG-TERM   — структурированный профиль пользователя (profile.md)
+
+Агент получает инструменты для прямого обновления памяти —
+когда пользователь просит "обнови статус", модель вызывает tool,
+а не просто советует команду.
+"""
+
+from __future__ import annotations
 import os
-
-import anthropic
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
+import anthropic
 
-from memory import LongTermMemory, ShortTermMemory, WorkingMemory
+from memory import ShortTermMemory, WorkingMemory, LongTermMemory, PROFILE_FIELDS, TASK_STATUSES, VALID_TRANSITIONS
 
-load_dotenv()
+# ── Init ───────────────────────────────────────────────────────────────────────
 
-_api_key = os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
+load_dotenv(Path(__file__).parent / ".env")
+API_KEY = os.getenv("CLAUDE_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+if not API_KEY:
+    sys.exit("ERROR: CLAUDE_API_KEY not found in .env")
 
-MODEL     = "claude-haiku-4-5"
-PRICE_IN  = 1.00 / 1_000_000
-PRICE_OUT = 5.00 / 1_000_000
+client  = anthropic.Anthropic(api_key=API_KEY)
+MODEL   = "claude-opus-4-8"
 
-SYSTEM_BASE = (
-    "Ты полезный AI-ассистент. "
-    "Учитывай всю предоставленную тебе информацию о пользователе, задаче и текущем диалоге. "
-    "Обращайся к пользователю по имени. Отвечай кратко и по делу."
-)
+short   = ShortTermMemory()
+working = WorkingMemory()
+long_   = LongTermMemory()
 
-STM_EXTRACT_PROMPT = """\
-Из диалога ниже извлеки:
-1. Основную проблему/вопрос пользователя (одно предложение).
-2. Предложенные решения с аргументами (список, максимум 4).
 
-Верни ТОЛЬКО валидный JSON в формате:
-{
-  "problem": "...",
-  "solutions": [
-    {"solution": "...", "arguments": "..."},
-    ...
-  ]
+# ── Tools (инструменты для обновления памяти) ──────────────────────────────────
+
+TOOLS = [
+    {
+        "name": "set_task_status",
+        "description": (
+            "Обновить статус текущей задачи. Статусы движутся по графу: "
+            "planning → in-progress → review → done (с откатами: review → in-progress, in-progress → planning). "
+            "Переходы за пределами графа будут отклонены — в ответе придёт сообщение об ошибке. "
+            "Вызывай, когда пользователь явно говорит о начале/завершении работы или смене статуса."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": list(TASK_STATUSES),
+                    "description": "Целевой статус задачи",
+                }
+            },
+            "required": ["status"],
+        },
+    },
+    {
+        "name": "set_task_summary",
+        "description": (
+            "Обновить краткое саммари текущей задачи. "
+            "Вызывай, когда пользователь подтверждает описание задачи или просит "
+            "зафиксировать текущее состояние."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "summary": {
+                    "type": "string",
+                    "description": "Краткое описание текущего состояния задачи (1-2 предложения)",
+                }
+            },
+            "required": ["summary"],
+        },
+    },
+    {
+        "name": "add_note",
+        "description": (
+            "Добавить заметку к текущей задаче. "
+            "Вызывай при важных решениях, фактах, договорённостях, "
+            "которые нужно сохранить."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "type": "string",
+                    "description": "Текст заметки",
+                }
+            },
+            "required": ["note"],
+        },
+    },
+    {
+        "name": "set_profile_field",
+        "description": (
+            "Обновить поле профиля пользователя. "
+            "Вызывай, когда пользователь сообщает о себе новую информацию "
+            "(имя, профессия, грейд, стек)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string",
+                    "enum": list(PROFILE_FIELDS.keys()),
+                    "description": "Поле: name=Имя, occupation=Род деятельности, grade=Грейд, stack=Стек",
+                },
+                "value": {
+                    "type": "string",
+                    "description": "Новое значение",
+                },
+            },
+            "required": ["field", "value"],
+        },
+    },
+    {
+        "name": "create_task",
+        "description": (
+            "Создать новую задачу в рабочей памяти и сделать её текущей. "
+            "Вызывай, когда пользователь хочет начать работу над новой задачей."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Название новой задачи",
+                }
+            },
+            "required": ["name"],
+        },
+    },
+]
+
+
+def execute_tool(name: str, inp: dict) -> str:
+    """Execute a tool call and return a human-readable result string."""
+    if name == "set_task_status":
+        err = working.set_status(inp["status"])
+        return f"Статус → {inp['status']}" if not err else f"Ошибка: {err}"
+
+    if name == "set_task_summary":
+        err = working.set_summary(inp["summary"])
+        return "Саммари обновлено" if not err else f"Ошибка: {err}"
+
+    if name == "add_note":
+        err = working.add_note(inp["note"])
+        return f"Заметка: {inp['note'][:60]}" if not err else f"Ошибка: {err}"
+
+    if name == "set_profile_field":
+        err = long_.set_field(inp["field"], inp["value"])
+        label = PROFILE_FIELDS.get(inp["field"], inp["field"])
+        return f"{label} → {inp['value']}" if not err else f"Ошибка: {err}"
+
+    if name == "create_task":
+        err = working.add_task(inp["name"])
+        return f"Задача создана: {inp['name']}" if not err else f"Ошибка: {err}"
+
+    return f"Неизвестный инструмент: {name}"
+
+
+# ── Help text ──────────────────────────────────────────────────────────────────
+
+HELP_TEXT = """
+╔══════════════════════════════════════════════════════════════════╗
+║                          КОМАНДЫ                                 ║
+╠══════════════════════════════════════════════════════════════════╣
+║  ЗАДАЧИ                                                          ║
+║  /task new <название>     создать задачу и сделать текущей       ║
+║  /task list               список всех задач                      ║
+║  /task use <название>     переключиться на задачу                ║
+║  /task status <статус>    сменить статус текущей задачи          ║
+║    статусы: planning | in-progress | review | done               ║
+║  /task summary <текст>    обновить саммари текущей задачи        ║
+║  /task done               отметить текущую задачу выполненной    ║
+║  /note <текст>            добавить заметку к текущей задаче      ║
+╠══════════════════════════════════════════════════════════════════╣
+║  ПРОФИЛЬ                                                         ║
+║  /profile show            показать профиль                       ║
+║  /profile name <знач>     изменить имя                           ║
+║  /profile occupation <з>  изменить род деятельности              ║
+║  /profile grade <знач>    изменить грейд                         ║
+║  /profile stack <знач>    изменить стек                          ║
+╠══════════════════════════════════════════════════════════════════╣
+║  ПРОЧЕЕ                                                          ║
+║  /memory                  состояние всех слоёв памяти            ║
+║  /clear short             начать диалог заново                   ║
+║  /help                    эта справка                            ║
+║  /quit                    выход                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+"""
+
+PROFILE_CMD_MAP: dict[str, str] = {
+    "name": "name", "occupation": "occupation", "grade": "grade", "stack": "stack",
+    "имя": "name", "деятельность": "occupation", "грейд": "grade", "стек": "stack",
 }
 
-Если решений ещё нет — solutions = [].
-Если проблема не определена — problem = "".
-Отвечай ТОЛЬКО JSON, без пояснений."""
 
+# ── System prompt ──────────────────────────────────────────────────────────────
 
-def _ask_input(prompt: str, default: str = "") -> str:
-    """Запрашивает ввод у пользователя в терминале."""
-    suffix = f" [{default}]" if default else ""
-    try:
-        value = input(f"  {prompt}{suffix}: ").strip()
-        return value or default
-    except (EOFError, KeyboardInterrupt):
-        return default
+def build_system_prompt() -> str:
+    profile_text  = long_.to_prompt_text()
+    workflow_text = working.to_prompt_text()
+    cur = working.get_current_task()
 
-
-class MemoryAgent:
-
-    def __init__(self):
-        self.client = anthropic.Anthropic(api_key=_api_key)
-        self.stm    = ShortTermMemory()
-        self.wm     = WorkingMemory()
-        self.ltm    = LongTermMemory()
-
-        self._messages: list[dict] = []   # буфер для STM-экстракции
-        self.total_input_tokens  = 0
-        self.total_output_tokens = 0
-        self.turn_count          = 0
-
-    # ─────────────────────────────────── запуск сессии
-
-    def start_session(self) -> None:
-        """
-        Главный метод инициализации.
-        Вызывается один раз перед началом диалога.
-        """
-        print("\n" + "═" * 58)
-        print("  ЗАПУСК СЕССИИ")
-        print("═" * 58)
-
-        self._init_ltm()
-        self._init_wm()
-
-        system = self._build_system_prompt()
-        print("\n  [SYSTEM PROMPT сформирован]")
-        print("─" * 58)
-        print(system)
-        print("─" * 58 + "\n")
-
-    def _init_ltm(self) -> None:
-        """Проверяет LTM. Если отсутствует или неполная — собирает данные у пользователя."""
-        missing = self.ltm.missing_fields()
-
-        if not missing:
-            print(f"\n  [LTM] Профиль загружен: {self.ltm.name}, {self.ltm.role}")
-            return
-
-        if not self.ltm.exists():
-            print("\n  [LTM] Профиль не найден. Заполним сейчас.")
-        else:
-            print(f"\n  [LTM] Профиль неполный. Не хватает: {', '.join(missing)}")
-
-        print()
-        if not self.ltm.name:
-            self.ltm.name = _ask_input("Ваше имя")
-        if not self.ltm.role:
-            self.ltm.role = _ask_input("Должность / роль")
-        if not self.ltm.age:
-            self.ltm.age = _ask_input("Возраст (Enter — пропустить)")
-        if not self.ltm.stack:
-            self.ltm.stack = _ask_input("Основной стек технологий")
-        if not self.ltm.sources:
-            self.ltm.sources = _ask_input(
-                "Предпочтительные источники информации (Enter — пропустить)"
-            )
-
-        self.ltm.save()
-        print(f"\n  [LTM] Профиль сохранён → {self.ltm._path}")
-
-    def _init_wm(self) -> None:
-        """
-        Проверяет рабочую память.
-        Если есть незавершённые задачи — предлагает продолжить.
-        """
-        open_tasks = [name for name, info in self.wm.tasks.items()
-                      if info["status"] != "завершена"]
-
-        if not open_tasks:
-            print("\n  [WM] Незавершённых задач нет.")
-            self._start_new_task_dialog()
-            return
-
-        print(f"\n  [WM] Найдены незавершённые задачи ({len(open_tasks)}):")
-        for i, name in enumerate(open_tasks, 1):
-            info = self.wm.tasks[name]
-            done_count = len(info["done"])
-            print(f"    {i}. {name}  [{done_count} шаг(ов) выполнено]")
-
-        print()
-        choice = _ask_input(
-            "Продолжить задачу (введи номер) или начать новую (Enter)"
+    current_block = ""
+    if cur:
+        notes_lines = "\n".join(
+            f"  - [{n['time']}] {n['text']}" for n in cur["notes"]
+        ) if cur["notes"] else "  (нет заметок)"
+        allowed = VALID_TRANSITIONS[cur["status"]]
+        transitions_hint = (
+            f"Допустимые переходы из '{cur['status']}': {', '.join(allowed)}"
+            if allowed else "Задача завершена, переходы недоступны"
         )
+        current_block = f"""
+### Текущая задача (детали)
+Название    : {cur['name']}
+Статус      : {cur['status']}
+{transitions_hint}
+Саммари     : {cur['summary'] or '(не указано)'}
+Обновлено   : {cur['updated_at']}
+Заметки     :
+{notes_lines}
+"""
 
-        if choice.isdigit() and 1 <= int(choice) <= len(open_tasks):
-            task_name = open_tasks[int(choice) - 1]
-            self.wm.resume_task(task_name)
-            print(f"  [WM] Продолжаем задачу «{task_name}»")
+    return f"""Ты полезный ассистент с явной трёхслойной моделью памяти.
+
+## Профиль пользователя
+{profile_text}
+
+## Рабочая память — все задачи
+{workflow_text}
+{current_block}
+## Инструменты памяти (ВАЖНО)
+У тебя есть инструменты для прямого обновления памяти.
+Используй их сразу, без лишних вопросов, когда:
+- пользователь явно просит обновить статус, саммари, заметку или профиль;
+- пользователь говорит "выполни", "запиши", "обнови", "зафиксируй" — применительно к памяти;
+- контекст диалога однозначно указывает на нужное значение.
+
+Статусы двигаются строго по графу. Если вызов set_task_status вернул ошибку перехода —
+сообщи пользователю какие переходы допустимы из текущего статуса.
+
+## Инструкции
+- Отвечай с учётом профиля и контекста задачи.
+- Когда пользователь принимает важное решение — предложи зафиксировать через add_note.
+- Будь лаконичен.
+"""
+
+
+def build_messages_for_api() -> list[dict]:
+    return short.get_messages()
+
+
+# ── Memory display ─────────────────────────────────────────────────────────────
+
+def _section(title: str) -> None:
+    print(f"\n{'─' * 60}")
+    print(f"  {title}")
+    print('─' * 60)
+
+
+def show_memory() -> None:
+    print("\n" + "═" * 60)
+    print("  СОСТОЯНИЕ ПАМЯТИ")
+    print("═" * 60)
+
+    # SHORT-TERM
+    _section("SHORT-TERM  (текущий диалог)")
+    msgs = short.get_messages()
+    if not msgs:
+        print("  (пусто)")
+    else:
+        for i, m in enumerate(msgs, 1):
+            role = "Вы   " if m["role"] == "user" else "Агент"
+            content = m["content"]
+            if isinstance(content, str):
+                text = content
+            else:
+                # list of blocks — tool_use / tool_result / text
+                parts = []
+                for b in content:
+                    t = b.get("type", "")
+                    if t == "text":
+                        parts.append(b["text"])
+                    elif t == "tool_use":
+                        parts.append(f"[tool:{b['name']} {b['input']}]")
+                    elif t == "tool_result":
+                        parts.append(f"[result:{b['content']}]")
+                text = " | ".join(parts)
+            # wrap long lines
+            max_w = 56
+            while text:
+                print(f"  {i:>2}. {role}: {text[:max_w]}")
+                text = text[max_w:]
+                i = ""  # blank index for continuation lines
+                role = "     "
+
+    # WORKING
+    _section("WORKING  (рабочая память — задачи)")
+    tasks = working.get_tasks()
+    if not tasks:
+        print("  (нет задач)")
+    else:
+        cur = working.get_current_task()
+        cur_name = cur["name"] if cur else ""
+        for t in tasks:
+            marker = "→" if t["name"] == cur_name else " "
+            print(f"  {marker} [{t['status']}] {t['name']}")
+            if t["summary"]:
+                print(f"       Саммари: {t['summary']}")
+            for note in t["notes"]:
+                print(f"       {note}")
+
+    # LONG-TERM
+    _section("LONG-TERM  (профиль пользователя)")
+    data = long_.load()
+    for key, label in PROFILE_FIELDS.items():
+        val = data.get(key) or "(не указано)"
+        print(f"  {label}: {val}")
+
+    print("\n" + "═" * 60 + "\n")
+
+
+# ── Command handler ────────────────────────────────────────────────────────────
+
+def handle_command(raw: str) -> bool:
+    cmd = raw.strip()
+
+    if cmd == "/help":
+        print(HELP_TEXT)
+        return True
+
+    if cmd == "/memory":
+        show_memory()
+        return True
+
+    if cmd in ("/quit", "/exit"):
+        print("До свидания!")
+        sys.exit(0)
+
+    if cmd == "/clear short":
+        short.clear()
+        print("[SHORT-TERM] Диалог сброшен.")
+        return True
+
+    if cmd.startswith("/note "):
+        note = cmd[6:].strip()
+        err = working.add_note(note)
+        print(f"Ошибка: {err}" if err else f"[WORKING] Заметка добавлена: {note}")
+        return True
+
+    if cmd.startswith("/task"):
+        rest = cmd[5:].strip()
+        if rest == "list":
+            tasks = working.get_tasks()
+            if not tasks:
+                print("Задач нет. Создайте: /task new <название>")
+            else:
+                cur = working.get_current_task()
+                cur_name = cur["name"] if cur else ""
+                print()
+                for t in tasks:
+                    marker = "→" if t["name"] == cur_name else " "
+                    summary_part = f"  — {t['summary']}" if t["summary"] else ""
+                    print(f"  {marker} [{t['status']}] {t['name']}{summary_part}")
+                print()
+        elif rest.startswith("new "):
+            name = rest[4:].strip()
+            err = working.add_task(name)
+            print(f"Ошибка: {err}" if err else f"[WORKING] Создана задача: {name}")
+        elif rest.startswith("use "):
+            name = rest[4:].strip()
+            err = working.set_current(name)
+            print(f"Ошибка: {err}" if err else f"[WORKING] Текущая задача: {name}")
+        elif rest == "done":
+            err = working.set_status("done")
+            print(f"Ошибка: {err}" if err else "[WORKING] Задача выполнена.")
+        elif rest.startswith("status "):
+            err = working.set_status(rest[7:].strip())
+            print(f"Ошибка: {err}" if err else f"[WORKING] Статус: {rest[7:].strip()}")
+        elif rest.startswith("summary "):
+            err = working.set_summary(rest[8:].strip())
+            print(f"Ошибка: {err}" if err else "[WORKING] Саммари обновлено.")
         else:
-            self._start_new_task_dialog()
+            print("Использование: /task new|list|use|status|summary|done  (или /help)")
+        return True
 
-    def _start_new_task_dialog(self) -> None:
-        name = _ask_input("Название новой задачи", default="Без названия")
-        self.wm.new_task(name)
-        print(f"  [WM] Новая задача: «{name}»")
+    if cmd.startswith("/profile"):
+        rest = cmd[8:].strip()
+        if not rest or rest == "show":
+            data = long_.load()
+            print()
+            for key, label in PROFILE_FIELDS.items():
+                print(f"  {label}: {data.get(key) or '(не указано)'}")
+            print()
+        else:
+            parts = rest.split(" ", 1)
+            if len(parts) == 2:
+                sub, value = parts
+                field_key = PROFILE_CMD_MAP.get(sub.lower())
+                if field_key:
+                    err = long_.set_field(field_key, value.strip())
+                    print(f"Ошибка: {err}" if err else
+                          f"[LONG-TERM] {PROFILE_FIELDS[field_key]}: {value.strip()}")
+                else:
+                    print(f"Неизвестное поле: {sub}  (доступны: name, occupation, grade, stack)")
+            else:
+                print("Использование: /profile show | /profile <поле> <значение>")
+        return True
 
-    # ─────────────────────────────────── system prompt
+    if cmd.startswith("/"):
+        print(f"Неизвестная команда: {cmd}  (введите /help для справки)")
+        return True
 
-    def _build_system_prompt(self) -> str:
-        blocks = [SYSTEM_BASE]
+    return False
 
-        ltm_block = self.ltm.to_prompt_block()
-        if ltm_block:
-            blocks.append(ltm_block)
 
-        wm_block = self.wm.current_task_block()
-        if wm_block:
-            blocks.append(wm_block)
+# ── LLM call with tool use loop ────────────────────────────────────────────────
 
-        stm_block = self.stm.to_prompt_block()
-        if stm_block:
-            blocks.append(stm_block)
+def chat(user_input: str) -> str:
+    short.add("user", user_input)
 
-        return "\n\n".join(blocks)
-
-    # ─────────────────────────────────── STM-экстракция
-
-    def _update_stm(self) -> None:
-        """
-        После каждого хода просит модель извлечь проблему и решения из буфера.
-        Обновляет STM и сохраняет в файл.
-        """
-        if len(self._messages) < 2:
-            return
-
-        dialog_text = "\n".join(
-            f"{m['role'].upper()}: {m['content']}" for m in self._messages[-6:]
-        )
-
-        try:
-            resp = self.client.messages.create(
-                model=MODEL,
-                max_tokens=600,
-                system=STM_EXTRACT_PROMPT,
-                messages=[{"role": "user", "content": dialog_text}],
-            )
-            import json, re
-            raw = resp.content[0].text.strip()
-            # Вырезаем JSON если модель добавила текст вокруг
-            # Убираем ```json ... ``` если модель завернула ответ в code block
-            raw = re.sub(r"```(?:json)?\s*", "", raw).strip()
-            match = re.search(r"\{.*\}", raw, re.DOTALL)
-            data = json.loads(match.group()) if match else {}
-            problem   = data.get("problem") or self.stm.problem
-            solutions = data.get("solutions") or self.stm.solutions
-            if not problem:
-                user_msgs = [msg["content"] for msg in self._messages if msg["role"] == "user"]
-                problem = user_msgs[-1] if user_msgs else ""
-            self.stm.update(problem=problem, solutions=solutions)
-        except Exception:
-            pass  # экстракция не критична, продолжаем
-
-    # ─────────────────────────────────── основной запрос
-
-    def ask(self, user_message: str) -> tuple[str, dict]:
-        self.turn_count += 1
-
-        self._messages.append({"role": "user", "content": user_message})
-
-        system   = self._build_system_prompt()
-        messages = list(self._messages)
-
-        response = self.client.messages.create(
+    while True:
+        response = client.messages.create(
             model=MODEL,
-            max_tokens=400,
-            system=system,
-            messages=messages,
+            max_tokens=2048,
+            system=build_system_prompt(),
+            messages=build_messages_for_api(),
+            tools=TOOLS,
         )
 
-        answer     = response.content[0].text.strip()
-        inp_tokens = response.usage.input_tokens
-        out_tokens = response.usage.output_tokens
+        if response.stop_reason == "tool_use":
+            # Collect content blocks for the assistant turn
+            assistant_blocks = []
+            tool_results = []
 
-        self.total_input_tokens  += inp_tokens
-        self.total_output_tokens += out_tokens
+            for block in response.content:
+                if block.type == "text":
+                    assistant_blocks.append({"type": "text", "text": block.text})
+                elif block.type == "tool_use":
+                    assistant_blocks.append({
+                        "type": "tool_use",
+                        "id": block.id,
+                        "name": block.name,
+                        "input": block.input,
+                    })
+                    result = execute_tool(block.name, block.input)
+                    print(f"  [ПАМЯТЬ] {result}")
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": result,
+                    })
 
-        self._messages.append({"role": "assistant", "content": answer})
+            # Store assistant turn (with tool_use blocks) and tool results
+            short.add("assistant", assistant_blocks)
+            short.add("user", tool_results)
+            # Loop: send tool results back to get final reply
 
-        # Обновляем STM после каждого хода
-        self._update_stm()
+        else:
+            # Final text response
+            reply = "\n".join(b.text for b in response.content if b.type == "text")
+            short.add("assistant", reply)
+            return reply
 
-        stats = {
-            "turn":       self.turn_count,
-            "inp_tokens": inp_tokens,
-            "out_tokens": out_tokens,
-            "cost":       (self.total_input_tokens  * PRICE_IN +
-                           self.total_output_tokens * PRICE_OUT),
-        }
-        return answer, stats
 
-    # ─────────────────────────────────── конец сессии
+# ── Startup flow ───────────────────────────────────────────────────────────────
 
-    def end_session(self) -> None:
-        """
-        Завершает сессию:
-        - STM очищается
-        - WM сохраняется
-        - LTM остаётся (если пользователь не попросил обновить)
-        """
-        print("\n" + "═" * 58)
-        print("  ЗАВЕРШЕНИЕ СЕССИИ")
-        print("═" * 58)
+def _ask(prompt: str) -> str:
+    try:
+        return input(prompt).strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return ""
 
-        if not self.stm.is_empty():
-            print(f"\n  [STM] Финальное саммари:")
-            print(f"    Проблема: {self.stm.problem}")
-            for s in self.stm.solutions:
-                print(f"    • {s['solution']}")
 
-        print(f"  [STM] Сохранена в {self.stm._path}")
-        print(f"  ⚠️  Сессия завершена. Введите /clear-stm чтобы очистить краткосрочную память.")
+def startup_flow() -> None:
+    # 1. Profile check
+    if not long_.is_complete():
+        data = long_.load()
+        missing = [label for key, label in PROFILE_FIELDS.items() if not data[key].strip()]
+        print(f"\n⚠  Профиль не заполнен (отсутствует: {', '.join(missing)}).")
+        if _ask("Заполнить сейчас? (y/n): ").lower() == "y":
+            for key, label in PROFILE_FIELDS.items():
+                cur = data.get(key, "")
+                prompt = f"  {label}" + (f" [{cur}]" if cur else "") + ": "
+                val = _ask(prompt)
+                if val:
+                    long_.set_field(key, val)
+            print("[ПРОФИЛЬ] Сохранён.\n")
 
-        self.wm.save()
-        print(f"  [WM]  Сохранена. Текущая задача: «{self.wm.current_task or '—'}»")
+    # 2. Task check
+    active = working.get_active_tasks()
+    if active:
+        print(f"\n📋 Незавершённые задачи ({len(active)}):")
+        for i, t in enumerate(active, 1):
+            summary_part = f"  — {t['summary']}" if t["summary"] else ""
+            print(f"  {i}. [{t['status']}] {t['name']}{summary_part}")
+        print("  n. Создать новую задачу\n  (Enter — пропустить)")
+        ans = _ask("Выберите (номер / n / Enter): ")
+        if ans.isdigit() and 1 <= int(ans) <= len(active):
+            chosen = active[int(ans) - 1]
+            working.set_current(chosen["name"])
+            print(f"[РАБОЧАЯ ПАМЯТЬ] Продолжаем: {chosen['name']}\n")
+        elif ans.lower() == "n":
+            name = _ask("Название новой задачи: ")
+            if name:
+                err = working.add_task(name)
+                print(f"Ошибка: {err}" if err else f"[РАБОЧАЯ ПАМЯТЬ] Создана задача: {name}\n")
+    else:
+        print("\n📋 Незавершённых задач нет.")
+        if _ask("Создать новую задачу? (y/n): ").lower() == "y":
+            name = _ask("Название задачи: ")
+            if name:
+                err = working.add_task(name)
+                print(f"Ошибка: {err}" if err else f"[РАБОЧАЯ ПАМЯТЬ] Создана задача: {name}\n")
 
-        print(f"  [LTM] Без изменений ({self.ltm._path})")
 
-        cost = self.total_input_tokens * PRICE_IN + self.total_output_tokens * PRICE_OUT
-        print(f"\n  Итого: {self.turn_count} ходов | "
-              f"вход {self.total_input_tokens:,} + выход {self.total_output_tokens:,} tok | "
-              f"${cost:.5f}")
-        print("═" * 58 + "\n")
+# ── Main loop ─────────────────────────────────────────────────────────────────
 
-    # ─────────────────────────────────── явное управление WM
+def main() -> None:
+    print("=" * 66)
+    print("  CLI-агент с трёхслойной памятью  |  /help — справка  |  /quit — выход")
+    print("=" * 66)
 
-    def task_done(self, item: str) -> None:
-        self.wm.add_done(item)
-        print(f"  [WM] ✓ {item}")
+    startup_flow()
+    show_memory()
 
-    def close_task(self) -> None:
-        self.wm.close_task()
+    while True:
+        try:
+            user_input = input("Вы: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nДо свидания!")
+            break
 
-    def update_profile(self) -> None:
-        """Обновляет LTM по запросу пользователя."""
-        print("\n  [LTM] Обновление профиля:")
-        self.ltm.name    = _ask_input("Имя",        self.ltm.name)
-        self.ltm.role    = _ask_input("Должность",  self.ltm.role)
-        self.ltm.age     = _ask_input("Возраст",    self.ltm.age)
-        self.ltm.stack   = _ask_input("Стек",       self.ltm.stack)
-        self.ltm.sources = _ask_input("Источники",  self.ltm.sources)
-        self.ltm.save()
-        print(f"  [LTM] Профиль обновлён → {self.ltm._path}\n")
+        if not user_input:
+            continue
+
+        if handle_command(user_input):
+            continue
+
+        print("Агент: ", end="", flush=True)
+        reply = chat(user_input)
+        print(reply)
+        print()
+
+
+if __name__ == "__main__":
+    main()
