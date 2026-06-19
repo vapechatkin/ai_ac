@@ -1,0 +1,225 @@
+<svg viewBox="0 0 900 820" xmlns="http://www.w3.org/2000/svg" role="img" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif">
+  <title>AI Agent — архитектура приложения</title>
+  <desc>Схема работы нативного macOS AI-агента: конечный автомат, три агента, слои данных</desc>
+  <defs>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L8,3.5 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="ag" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L8,3.5 Z" fill="#6366f1"/>
+    </marker>
+    <marker id="ab" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L8,3.5 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="ag2" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L8,3.5 Z" fill="#16a34a"/>
+    </marker>
+    <marker id="ao" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
+      <path d="M0,0 L0,7 L8,3.5 Z" fill="#ea580c"/>
+    </marker>
+  </defs>
+
+  <!-- BACKGROUND -->
+  <rect width="900" height="820" fill="#f8fafc" rx="16"/>
+
+  <!-- TITLE -->
+  <text x="450" y="36" text-anchor="middle" font-size="17" font-weight="700" fill="#0f172a">AI Agent — как это работает</text>
+
+  <!-- LAYER: INTERFACE -->
+  <text x="20" y="66" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">ИНТЕРФЕЙС</text>
+
+  <rect x="20" y="74" width="100" height="52" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="70" y="96" text-anchor="middle" font-size="20">👤</text>
+  <text x="70" y="114" text-anchor="middle" font-size="10" fill="#475569">Пользователь</text>
+
+  <rect x="148" y="74" width="96" height="52" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="196" y="96" text-anchor="middle" font-size="9" font-weight="600" fill="#2563eb">SetupView</text>
+  <text x="196" y="110" text-anchor="middle" font-size="9" fill="#60a5fa">онбординг</text>
+
+  <rect x="254" y="74" width="96" height="52" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="302" y="96" text-anchor="middle" font-size="9" font-weight="600" fill="#2563eb">SidebarView</text>
+  <text x="302" y="110" text-anchor="middle" font-size="9" fill="#60a5fa">задачи + кнопки</text>
+
+  <rect x="360" y="74" width="96" height="52" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="408" y="96" text-anchor="middle" font-size="9" font-weight="600" fill="#2563eb">ChatView</text>
+  <text x="408" y="110" text-anchor="middle" font-size="9" fill="#60a5fa">история + ввод</text>
+
+  <rect x="466" y="74" width="96" height="52" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="514" y="96" text-anchor="middle" font-size="9" font-weight="600" fill="#2563eb">MemoryView</text>
+  <text x="514" y="110" text-anchor="middle" font-size="9" fill="#60a5fa">профиль + инв.</text>
+
+  <line x1="120" y1="100" x2="144" y2="100" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- LAYER: ORCHESTRATOR -->
+  <text x="20" y="158" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">ОРКЕСТРАТОР</text>
+
+  <rect x="20" y="166" width="550" height="66" rx="10" fill="#faf5ff" stroke="#c4b5fd" stroke-width="2"/>
+  <text x="295" y="188" text-anchor="middle" font-size="11" font-weight="700" fill="#6d28d9">Orchestrator  (@MainActor · ObservableObject)</text>
+  <text x="295" y="206" text-anchor="middle" font-size="9" fill="#7c3aed">handleUserInput  ·  handleAwaitingConfirmChat  ·  handleConfirm  ·  handleBack  ·  kickstart  ·  deleteTask</text>
+  <text x="295" y="220" text-anchor="middle" font-size="9" fill="#a78bfa">@Published: messages · currentTask · allTasks · isLoading</text>
+
+  <line x1="196" y1="126" x2="196" y2="162" stroke="#6366f1" stroke-width="1.5" marker-end="url(#ag)" stroke-dasharray="4,2"/>
+  <line x1="302" y1="126" x2="302" y2="162" stroke="#6366f1" stroke-width="1.5" marker-end="url(#ag)" stroke-dasharray="4,2"/>
+  <line x1="408" y1="126" x2="408" y2="162" stroke="#6366f1" stroke-width="1.5" marker-end="url(#ag)" stroke-dasharray="4,2"/>
+  <line x1="500" y1="126" x2="500" y2="162" stroke="#6366f1" stroke-width="1.5" marker-end="url(#ag)" stroke-dasharray="4,2"/>
+
+  <!-- LAYER: STATE MACHINE -->
+  <text x="20" y="258" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">КОНЕЧНЫЙ АВТОМАТ ЗАДАЧИ</text>
+
+  <rect x="20" y="266" width="130" height="72" rx="10" fill="#f0f9ff" stroke="#7dd3fc" stroke-width="2"/>
+  <rect x="20" y="266" width="130" height="22" rx="10" fill="#0ea5e9" stroke="none"/>
+  <rect x="20" y="278" width="130" height="10" rx="0" fill="#0ea5e9" stroke="none"/>
+  <text x="85" y="281" text-anchor="middle" font-size="10" font-weight="700" fill="white">PLANNING</text>
+  <text x="85" y="300" text-anchor="middle" font-size="9" fill="#0369a1">агент составляет</text>
+  <text x="85" y="313" text-anchor="middle" font-size="9" fill="#0369a1">детальный план</text>
+  <text x="85" y="328" text-anchor="middle" font-size="8" fill="#7dd3fc">finish_planning(steps)</text>
+
+  <rect x="210" y="266" width="130" height="72" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="2"/>
+  <rect x="210" y="266" width="130" height="22" rx="10" fill="#16a34a" stroke="none"/>
+  <rect x="210" y="278" width="130" height="10" rx="0" fill="#16a34a" stroke="none"/>
+  <text x="275" y="281" text-anchor="middle" font-size="10" font-weight="700" fill="white">EXECUTION</text>
+  <text x="275" y="300" text-anchor="middle" font-size="9" fill="#15803d">агент выполняет</text>
+  <text x="275" y="313" text-anchor="middle" font-size="9" fill="#15803d">каждый шаг плана</text>
+  <text x="275" y="328" text-anchor="middle" font-size="8" fill="#86efac">finish_execution(results)</text>
+
+  <rect x="400" y="266" width="130" height="72" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="2"/>
+  <rect x="400" y="266" width="130" height="22" rx="10" fill="#ea580c" stroke="none"/>
+  <rect x="400" y="278" width="130" height="10" rx="0" fill="#ea580c" stroke="none"/>
+  <text x="465" y="281" text-anchor="middle" font-size="10" font-weight="700" fill="white">VALIDATION</text>
+  <text x="465" y="300" text-anchor="middle" font-size="9" fill="#c2410c">агент проверяет</text>
+  <text x="465" y="313" text-anchor="middle" font-size="9" fill="#c2410c">соответствие плану</text>
+  <text x="465" y="328" text-anchor="middle" font-size="8" fill="#fdba74">finish_validation(passed)</text>
+
+  <rect x="590" y="266" width="100" height="72" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="590" y="266" width="100" height="22" rx="10" fill="#64748b" stroke="none"/>
+  <rect x="590" y="278" width="100" height="10" rx="0" fill="#64748b" stroke="none"/>
+  <text x="640" y="281" text-anchor="middle" font-size="10" font-weight="700" fill="white">DONE</text>
+  <text x="640" y="303" text-anchor="middle" font-size="20">✓</text>
+  <text x="640" y="326" text-anchor="middle" font-size="9" fill="#64748b">задача закрыта</text>
+
+  <line x1="150" y1="300" x2="206" y2="300" stroke="#16a34a" stroke-width="2" marker-end="url(#ag2)"/>
+  <text x="178" y="293" text-anchor="middle" font-size="8" fill="#16a34a">Confirm</text>
+
+  <line x1="340" y1="300" x2="396" y2="300" stroke="#ea580c" stroke-width="2" marker-end="url(#ao)"/>
+  <text x="368" y="293" text-anchor="middle" font-size="8" fill="#ea580c">Confirm</text>
+
+  <line x1="530" y1="300" x2="586" y2="300" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+  <text x="558" y="293" text-anchor="middle" font-size="8" fill="#94a3b8">passed ✓</text>
+
+  <path d="M465,338 L465,360 L275,360 L275,338" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="370" y="374" text-anchor="middle" font-size="8" fill="#ef4444">passed ✗ → вернуть на выполнение</text>
+
+  <path d="M210,280 L190,268 L150,268 L150,280" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#a)"/>
+  <text x="178" y="264" text-anchor="middle" font-size="7.5" fill="#94a3b8">Back</text>
+
+  <line x1="200" y1="232" x2="200" y2="262" stroke="#6366f1" stroke-width="1.5" marker-end="url(#ag)" stroke-dasharray="4,2"/>
+
+  <!-- LAYER: AGENTS -->
+  <text x="20" y="412" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">АГЕНТЫ  (отдельный API-запрос на каждый этап)</text>
+
+  <rect x="20" y="420" width="860" height="48" rx="10" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1.5"/>
+  <text x="36" y="438" font-size="9" font-weight="700" fill="#6d28d9">SYSTEM PROMPT (общий для всех агентов):</text>
+  <text x="36" y="453" font-size="9" fill="#7c3aed">  [ИНВАРИАНТЫ]  •  [ПРОФИЛЬ пользователя]  •  [ПРЕДПОЧТЕНИЯ]  •  [ИНСТРУКЦИЯ агента + правила конечного автомата]</text>
+
+  <rect x="20" y="484" width="185" height="90" rx="10" fill="#f0f9ff" stroke="#7dd3fc" stroke-width="1.5"/>
+  <text x="112" y="502" text-anchor="middle" font-size="10" font-weight="700" fill="#0369a1">Агент-планировщик</text>
+  <text x="112" y="518" text-anchor="middle" font-size="9" fill="#0369a1">user: задача + имя</text>
+  <text x="112" y="532" text-anchor="middle" font-size="9" fill="#0369a1">tool: finish_planning</text>
+  <text x="112" y="548" text-anchor="middle" font-size="8" fill="#7dd3fc">→ steps[], summary</text>
+  <text x="112" y="564" text-anchor="middle" font-size="8" fill="#94a3b8">claude-haiku-4-5</text>
+
+  <rect x="225" y="484" width="185" height="90" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+  <text x="317" y="502" text-anchor="middle" font-size="10" font-weight="700" fill="#15803d">Агент-исполнитель</text>
+  <text x="317" y="518" text-anchor="middle" font-size="9" fill="#15803d">user: задача + план</text>
+  <text x="317" y="532" text-anchor="middle" font-size="9" fill="#15803d">tool: finish_execution</text>
+  <text x="317" y="548" text-anchor="middle" font-size="8" fill="#86efac">→ step_results[], summary</text>
+  <text x="317" y="564" text-anchor="middle" font-size="8" fill="#94a3b8">claude-haiku-4-5</text>
+
+  <rect x="430" y="484" width="185" height="90" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="522" y="502" text-anchor="middle" font-size="10" font-weight="700" fill="#c2410c">Агент-валидатор</text>
+  <text x="522" y="518" text-anchor="middle" font-size="9" fill="#c2410c">user: план + результаты</text>
+  <text x="522" y="532" text-anchor="middle" font-size="9" fill="#c2410c">tool: finish_validation</text>
+  <text x="522" y="548" text-anchor="middle" font-size="8" fill="#fdba74">→ passed, summary</text>
+  <text x="522" y="564" text-anchor="middle" font-size="8" fill="#94a3b8">claude-haiku-4-5</text>
+
+  <rect x="635" y="484" width="245" height="90" rx="10" fill="#fdf4ff" stroke="#e9d5ff" stroke-width="1.5"/>
+  <text x="757" y="502" text-anchor="middle" font-size="10" font-weight="700" fill="#7e22ce">Координатор обратной связи</text>
+  <text x="757" y="518" text-anchor="middle" font-size="9" fill="#7e22ce">user: сообщение + текущий этап</text>
+  <text x="757" y="532" text-anchor="middle" font-size="9" fill="#7e22ce">tool: revise_stage (опц.)</text>
+  <text x="757" y="548" text-anchor="middle" font-size="8" fill="#d8b4fe">одобрение → «нажмите Confirm»</text>
+  <text x="757" y="562" text-anchor="middle" font-size="8" fill="#d8b4fe">правки → перезапуск агента</text>
+
+  <line x1="85" y1="338" x2="85" y2="420" stroke="#7dd3fc" stroke-width="1.2" stroke-dasharray="3,2"/>
+  <line x1="275" y1="338" x2="275" y2="420" stroke="#86efac" stroke-width="1.2" stroke-dasharray="3,2"/>
+  <line x1="465" y1="338" x2="465" y2="420" stroke="#fdba74" stroke-width="1.2" stroke-dasharray="3,2"/>
+
+  <!-- LAYER: SERVICES -->
+  <text x="20" y="600" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">СЕРВИСЫ</text>
+
+  <rect x="20" y="608" width="160" height="56" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="100" y="626" text-anchor="middle" font-size="9" font-weight="600" fill="#334155">WorkingMemoryService</text>
+  <text x="100" y="641" text-anchor="middle" font-size="8.5" fill="#64748b">CRUD задач, переходы</text>
+  <text x="100" y="655" text-anchor="middle" font-size="8.5" fill="#64748b">этапов, откаты</text>
+
+  <rect x="196" y="608" width="160" height="56" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="276" y="626" text-anchor="middle" font-size="9" font-weight="600" fill="#334155">LongTermMemoryService</text>
+  <text x="276" y="641" text-anchor="middle" font-size="8.5" fill="#64748b">профиль, предпочтения</text>
+  <text x="276" y="655" text-anchor="middle" font-size="8.5" fill="#64748b">→ текст для промта</text>
+
+  <rect x="372" y="608" width="160" height="56" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="452" y="626" text-anchor="middle" font-size="9" font-weight="600" fill="#334155">InvariantMemoryService</text>
+  <text x="452" y="641" text-anchor="middle" font-size="8.5" fill="#64748b">правила-инварианты</text>
+  <text x="452" y="655" text-anchor="middle" font-size="8.5" fill="#64748b">→ блок [ИНВАРИАНТЫ]</text>
+
+  <rect x="548" y="608" width="140" height="56" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="618" y="626" text-anchor="middle" font-size="9" font-weight="600" fill="#334155">AnthropicClient</text>
+  <text x="618" y="641" text-anchor="middle" font-size="8.5" fill="#64748b">URLSession POST</text>
+  <text x="618" y="655" text-anchor="middle" font-size="8.5" fill="#64748b">/v1/messages</text>
+
+  <rect x="704" y="608" width="176" height="56" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="792" y="626" text-anchor="middle" font-size="9" font-weight="600" fill="#334155">KeyStorage</text>
+  <text x="792" y="641" text-anchor="middle" font-size="8.5" fill="#64748b">/ai_ac/.api_key</text>
+  <text x="792" y="655" text-anchor="middle" font-size="8.5" fill="#64748b">(не в git)</text>
+
+  <line x1="100" y1="232" x2="100" y2="604" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="276" y1="232" x2="276" y2="604" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="452" y1="232" x2="452" y2="604" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="580" y1="232" x2="580" y2="604" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- LAYER: DATA -->
+  <text x="20" y="692" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1">ХРАНЕНИЕ ДАННЫХ — SwiftData (d15/data/agent.store)</text>
+
+  <rect x="20" y="700" width="195" height="52" rx="10" fill="#fefce8" stroke="#fde047" stroke-width="1.5"/>
+  <text x="117" y="718" text-anchor="middle" font-size="9" font-weight="600" fill="#713f12">AgentTaskModel</text>
+  <text x="117" y="733" text-anchor="middle" font-size="8.5" fill="#854d0e">id · name · stage · plan</text>
+  <text x="117" y="747" text-anchor="middle" font-size="8.5" fill="#854d0e">stepNotes · results · isCurrent</text>
+
+  <rect x="231" y="700" width="195" height="52" rx="10" fill="#fefce8" stroke="#fde047" stroke-width="1.5"/>
+  <text x="328" y="718" text-anchor="middle" font-size="9" font-weight="600" fill="#713f12">UserProfileModel</text>
+  <text x="328" y="733" text-anchor="middle" font-size="8.5" fill="#854d0e">name · occupation · grade</text>
+  <text x="328" y="747" text-anchor="middle" font-size="8.5" fill="#854d0e">stack · style · language</text>
+
+  <rect x="442" y="700" width="195" height="52" rx="10" fill="#fefce8" stroke="#fde047" stroke-width="1.5"/>
+  <text x="539" y="718" text-anchor="middle" font-size="9" font-weight="600" fill="#713f12">InvariantModel</text>
+  <text x="539" y="733" text-anchor="middle" font-size="8.5" fill="#854d0e">id · category · rule</text>
+  <text x="539" y="747" text-anchor="middle" font-size="8.5" fill="#854d0e">createdAt</text>
+
+  <rect x="653" y="700" width="227" height="52" rx="10" fill="#fdf4ff" stroke="#d8b4fe" stroke-width="1.5"/>
+  <text x="766" y="718" text-anchor="middle" font-size="9" font-weight="600" fill="#6b21a8">Anthropic API</text>
+  <text x="766" y="733" text-anchor="middle" font-size="8.5" fill="#7e22ce">POST /v1/messages</text>
+  <text x="766" y="747" text-anchor="middle" font-size="8.5" fill="#7e22ce">claude-haiku-4-5-20251001</text>
+
+  <line x1="100" y1="664" x2="100" y2="696" stroke="#fde047" stroke-width="1.2" marker-end="url(#a)"/>
+  <line x1="276" y1="664" x2="310" y2="696" stroke="#fde047" stroke-width="1.2" marker-end="url(#a)"/>
+  <line x1="452" y1="664" x2="520" y2="696" stroke="#fde047" stroke-width="1.2" marker-end="url(#a)"/>
+  <line x1="618" y1="664" x2="730" y2="696" stroke="#d8b4fe" stroke-width="1.2" marker-end="url(#a)"/>
+
+  <!-- LEGEND -->
+  <rect x="710" y="420" width="170" height="52" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <line x1="722" y1="434" x2="748" y2="434" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="754" y="437" font-size="8.5" fill="#475569">@EnvironmentObject</text>
+  <line x1="722" y1="450" x2="748" y2="450" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="754" y="453" font-size="8.5" fill="#475569">вызов метода / данные</text>
+  <line x1="722" y1="464" x2="748" y2="464" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="754" y="467" font-size="8.5" fill="#475569">зависимость</text>
+</svg>

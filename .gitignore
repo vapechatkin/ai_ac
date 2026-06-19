@@ -1,1 +1,24 @@
+# Secrets
 .env
+.api_key
+
+# SwiftData store
+d15/data/
+
+# Swift build artifacts
+.build/
+*.o
+*.d
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# App bundle created by run.sh
+*.app
