@@ -1,0 +1,5 @@
+anthropic
+httpx
+python-dotenv
+starlette
+uvicorn
