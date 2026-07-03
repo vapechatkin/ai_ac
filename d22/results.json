@@ -1,0 +1,640 @@
+[
+  {
+    "id": 1,
+    "question": "What is the difference between RAG-Sequence and RAG-Token models?",
+    "expected_keywords": [
+      "RAG-Sequence",
+      "RAG-Token",
+      "marginal"
+    ],
+    "expected_sources": [
+      "rag_lewis_2020"
+    ],
+    "expected_sections": [
+      "2.1 Models"
+    ],
+    "no_rag": {
+      "text": "# RAG-Sequence vs RAG-Token\n\nBoth are retrieval-augmented generation models, but they differ in **when retrieval happens**:\n\n## RAG-Sequence\n- **Retrieves once** per input question\n- Uses a **single retrieved document** for generating the entire output sequence\n- More efficient but less flexible\n- Better when one document is sufficient to answer the question\n\n## RAG-Token\n- **Retrieves at each decoding step** (token-by-token generation)\n- Can use different documents for different parts of the output\n- More computationally expensive but more flexible\n- Better when the answer requires information from multiple documents or different contexts at different generation steps\n\n## Key Trade-off\n- **RAG-Sequence**: Speed vs. flexibility (favors speed)\n- **RAG-Token**: Flexibility vs. efficiency (favors flexibility)\n\nIn practice, RAG-Token typically performs better on complex tasks but at higher computational cost.",
+      "keyword_coverage": 0.6666666666666666,
+      "input_tokens": 75,
+      "output_tokens": 216,
+      "latency_sec": 3.21
+    },
+    "rag": {
+      "text": "# Difference Between RAG-Sequence and RAG-Token Models\n\nThe main differences between these two RAG models are:\n\n## Document Retrieval Strategy\n\n**RAG-Sequence**: Uses the same retrieved document to generate the complete output sequence. It retrieves the top-K documents and generates the entire output sequence probability for each document, then marginalizes across them.\n\n**RAG-Token**: Can draw a different latent document for each target token. This allows the generator to choose content from several different documents when producing an answer, retrieving top-K documents and then generating a distribution for each output token while considering all retrieved documents.\n\n## Probability Calculation\n\n- **RAG-Sequence**: Marginalizes at the sequence level: p(y|x) = Σ p_η(z|x)p_θ(y|x, z)\n- **RAG-Token**: Marginalizes at the token level for each position i: p(y|x) = Π_i Σ p_η(z|x)p_θ(y_i|x, z, y_{1:i-1})\n\n## Decoding Procedure\n\n**RAG-Token**: Can use standard beam search with a modified transition probability, making decoding more straightforward.\n\n**RAG-Sequence**: Requires special \"Thorough Decoding\" (running beam search for each document with additional forward passes) or \"Fast Decoding\" (an approximation) since the likelihood doesn't break into conventional per-token likelihoods.\n\nBoth models are equivalent for sequence classification tasks (when the target is a sequence of length one).\n\n[source: rag_lewis_2020, section 2.1 Models], [source: rag_lewis_2020, section 2.5 Decoding]",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "retrieved": [
+        {
+          "score": 0.7861049175262451,
+          "source": "rag_lewis_2020",
+          "section": "2.1 Models",
+          "chunk_id": "rag_lewis_2020__struct__0002_00"
+        },
+        {
+          "score": 0.7442466020584106,
+          "source": "rag_lewis_2020",
+          "section": "4.2 Abstractive Question Answering",
+          "chunk_id": "rag_lewis_2020__struct__0014_00"
+        },
+        {
+          "score": 0.7318207621574402,
+          "source": "rag_survey_2312",
+          "section": "Required Abilities",
+          "chunk_id": "rag_survey_2312__struct__0038_03"
+        },
+        {
+          "score": 0.7285285592079163,
+          "source": "rag_survey_2312",
+          "section": "Task and Evaluation",
+          "chunk_id": "rag_survey_2312__struct__0033_01"
+        },
+        {
+          "score": 0.7271062135696411,
+          "source": "rag_lewis_2020",
+          "section": "2.5 Decoding",
+          "chunk_id": "rag_lewis_2020__struct__0006_00"
+        }
+      ],
+      "input_tokens": 1376,
+      "output_tokens": 408,
+      "latency_sec": 4.41
+    }
+  },
+  {
+    "id": 2,
+    "question": "What retriever and generator components does the original RAG paper (Lewis et al.) use?",
+    "expected_keywords": [
+      "DPR",
+      "BART"
+    ],
+    "expected_sources": [
+      "rag_lewis_2020"
+    ],
+    "expected_sections": [
+      "2.2 Retriever: DPR",
+      "2.3 Generator: BART"
+    ],
+    "no_rag": {
+      "text": "# Original RAG Paper Components\n\n## Retriever\n**DPR (Dense Passage Retriever)**: A dense retriever based on BERT that uses learned representations to retrieve relevant passages from a corpus.\n\n## Generator\n**BART**: A sequence-to-sequence model fine-tuned to generate answers conditioned on retrieved passages.\n\nThe architecture follows a standard pattern: DPR retrieves the top-k most relevant passages from Wikipedia, then BART generates the final answer based on the question and retrieved context.",
+      "keyword_coverage": 1.0,
+      "input_tokens": 77,
+      "output_tokens": 114,
+      "latency_sec": 1.94
+    },
+    "rag": {
+      "text": "Based on the provided documents, I cannot find information about what retriever and generator components the original RAG paper by Lewis et al. uses.\n\nThe documents discuss RAG frameworks and components in general terms, and they mention various retrievers (like BM25, Contriever, SPECTER, MedCPT) and generators (like T5, LLaMA2, GPT-3.5, GPT-4) that are used across different studies, but they do not specifically describe which components were used in the original Lewis et al. RAG paper.\n\nTo answer your question accurately, I would need documents that specifically detail the original RAG paper's architecture and component choices.",
+      "keyword_coverage": 0.0,
+      "source_hit": false,
+      "section_hit": false,
+      "retrieved": [
+        {
+          "score": 0.6975501775741577,
+          "source": "rag_survey_2404",
+          "section": "2 RAG Framework",
+          "chunk_id": "rag_survey_2404__struct__0002_01"
+        },
+        {
+          "score": 0.6964319944381714,
+          "source": "rag_survey_2404",
+          "section": "8.2 Retriever and Generator",
+          "chunk_id": "rag_survey_2404__struct__0023_00"
+        },
+        {
+          "score": 0.681397557258606,
+          "source": "rag_survey_2312",
+          "section": "Retrieval",
+          "chunk_id": "rag_survey_2312__struct__0008_00"
+        },
+        {
+          "score": 0.6793211102485657,
+          "source": "rag_survey_2312",
+          "section": "Data Structure",
+          "chunk_id": "rag_survey_2312__struct__0010_00"
+        },
+        {
+          "score": 0.6756381988525391,
+          "source": "rag_survey_2312",
+          "section": "Retrieval Source",
+          "chunk_id": "rag_survey_2312__struct__0009_00"
+        }
+      ],
+      "input_tokens": 1289,
+      "output_tokens": 150,
+      "latency_sec": 1.74
+    }
+  },
+  {
+    "id": 3,
+    "question": "What are the three RAG paradigms described in the RAG survey (Naive, Advanced, Modular)?",
+    "expected_keywords": [
+      "Naive RAG",
+      "Advanced RAG",
+      "Modular RAG"
+    ],
+    "expected_sources": [
+      "rag_survey_2312"
+    ],
+    "expected_sections": [
+      "Naive RAG",
+      "Advanced RAG",
+      "Modular RAG"
+    ],
+    "no_rag": {
+      "text": "# Three RAG Paradigms\n\n## 1. **Naive RAG**\n- Simple retrieve-then-read approach\n- Documents are retrieved based on query similarity\n- Retrieved chunks are directly fed into an LLM for answer generation\n- Limited optimization; prone to irrelevant retrievals and context noise\n\n## 2. **Advanced RAG**\n- Addresses Naive RAG limitations through optimization techniques\n- Includes:\n  - **Retrieval improvements**: query expansion, reranking, multi-hop retrieval\n  - **Augmentation enhancements**: prompt engineering, context windowing\n  - **Generation improvements**: decoding strategies, answer refinement\n- Better handling of complex queries and multi-step reasoning\n\n## 3. **Modular RAG**\n- Flexible, task-specific architecture with independent, replaceable modules\n- Components can be:\n  - Swapped or reconfigured for different tasks\n  - Optimized individually\n  - Combined in various pipelines (sequential, branching, looping)\n- Supports specialized sub-tasks like routing, decomposition, and multi-agent approaches\n- Maximum flexibility for domain-specific applications\n\nEach paradigm increases in complexity and customization, moving from simple to highly adaptable systems.",
+      "keyword_coverage": 1.0,
+      "input_tokens": 82,
+      "output_tokens": 278,
+      "latency_sec": 3.38
+    },
+    "rag": {
+      "text": "# Three RAG Paradigms\n\nBased on the provided documents, here are the three RAG paradigms:\n\n## 1. **Naive RAG**\nThe earliest methodology that gained prominence shortly after the widespread adoption of ChatGPT. It follows a traditional \"Retrieve-Read\" framework consisting of three main steps:\n- **Indexing**: Raw data in various formats (PDF, HTML, Word, Markdown) is cleaned, extracted, and converted to plain text. Text is then segmented into chunks, encoded into vector representations using an embedding model, and stored in a vector database.\n- **Retrieval**: Top k chunks most relevant to the question are retrieved based on semantic similarity.\n- **Generation**: The original question and retrieved chunks are input into an LLM to generate the final answer.\n\n## 2. **Advanced RAG**\nIntroduces specific improvements to overcome Naive RAG's limitations by:\n- Enhancing retrieval quality through pre-retrieval and post-retrieval strategies\n- Refining indexing techniques using sliding window approaches, fine-grained segmentation, and metadata incorporation\n- Incorporating optimization methods to streamline the retrieval process\n- Still maintaining a chain-like structure similar to Naive RAG\n\n## 3. **Modular RAG**\nThe document mentions this paradigm exists as part of the three-stage development, but the provided context does not contain detailed information about its specific characteristics.\n\nThe documents note that Advanced RAG and Modular RAG were developed in response to specific shortcomings in Naive RAG, though RAG methods overall are cost-effective and surpass native LLM performance.\n\n[source: rag_survey_2312, section: Introduction; source: rag_survey_2312, section: Naive RAG; source: rag_survey_2312, section: Advanced RAG]",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "retrieved": [
+        {
+          "score": 0.8274660110473633,
+          "source": "rag_survey_2312",
+          "section": "Introduction",
+          "chunk_id": "rag_survey_2312__struct__0000_06"
+        },
+        {
+          "score": 0.789730966091156,
+          "source": "rag_survey_2312",
+          "section": "Naive RAG",
+          "chunk_id": "rag_survey_2312__struct__0002_00"
+        },
+        {
+          "score": 0.7824946045875549,
+          "source": "rag_survey_2312",
+          "section": "Conclusion",
+          "chunk_id": "rag_survey_2312__struct__0047_00"
+        },
+        {
+          "score": 0.7726796269416809,
+          "source": "rag_survey_2312",
+          "section": "Advanced RAG",
+          "chunk_id": "rag_survey_2312__struct__0003_00"
+        },
+        {
+          "score": 0.7702257037162781,
+          "source": "rag_survey_2312",
+          "section": "Discussion and Future Prospects",
+          "chunk_id": "rag_survey_2312__struct__0040_01"
+        }
+      ],
+      "input_tokens": 1362,
+      "output_tokens": 409,
+      "latency_sec": 3.69
+    }
+  },
+  {
+    "id": 4,
+    "question": "What chunking strategies are used for indexing optimization in RAG systems?",
+    "expected_keywords": [
+      "fixed",
+      "sliding window",
+      "recursive"
+    ],
+    "expected_sources": [
+      "rag_survey_2312"
+    ],
+    "expected_sections": [
+      "Chunking Strategy"
+    ],
+    "no_rag": {
+      "text": "# Chunking Strategies for RAG Systems\n\n## Common Approaches\n\n**1. Fixed-Size Chunking**\n- Divide text into uniform chunks (e.g., 256-512 tokens)\n- Simple but may split semantic units awkwardly\n- Risk of losing context at boundaries\n\n**2. Semantic Chunking**\n- Split based on topic/meaning changes\n- Uses sentence embeddings or similarity scores\n- Preserves semantic coherence\n\n**3. Recursive Chunking**\n- Hierarchically splits text using multiple delimiters (paragraphs → sentences → words)\n- Balances size and coherence\n- Adaptive to document structure\n\n**4. Sliding Window Chunking**\n- Overlapping chunks with stride\n- Prevents context loss at boundaries\n- Increases index size but improves retrieval\n\n## Optimization Considerations\n\n- **Chunk size**: Balance between specificity and context (typically 256-1024 tokens)\n- **Overlap**: 10-50% overlap helps with boundary issues\n- **Metadata enrichment**: Add headers, document info, summaries\n- **Parent-child chunking**: Small retrievable chunks linked to larger context\n- **Query-aware chunking**: Adapt chunk size based on expected query patterns\n\n## Emerging Strategies\n\n- **Small-to-Big retrieval**: Index small chunks, expand to larger context at retrieval\n- **Pre-computation**: Generate summaries or key points for chunks\n- **Domain-specific rules**: Tailor chunking to document type (code, tables, contracts)\n\nChoose strategy based on document type, query patterns, and latency requirements.",
+      "keyword_coverage": 1.0,
+      "input_tokens": 73,
+      "output_tokens": 367,
+      "latency_sec": 4.51
+    },
+    "rag": {
+      "text": "Based on the provided documents, the chunking strategies mentioned for indexing optimization in RAG systems are:\n\n1. **Sliding window approach** - Used by Advanced RAG to refine indexing techniques\n2. **Fine-grained segmentation** - Employed to break down text into smaller, more manageable pieces\n\nAdditionally, the documents mention that **Advanced chunking methods** are part of modular workflow optimization and can offer trade-offs that maximize both retrieval precision and speed.\n\nThe basic chunking process in Naive RAG involves segmenting text into smaller, digestible chunks to accommodate the context limitations of language models. These chunks are then encoded into vector representations using an embedding model and stored in a vector database.\n\nHowever, the provided documents do not go into extensive detail about specific chunking algorithms or strategies beyond these general approaches. The documents suggest that chunking strategies are interdependent with other components like embedding models and re-ranking algorithms, and their optimization should account for these cross-component interactions.\n\n[source=rag_survey_2312, section=Advanced RAG]\n[source=rag_survey_2404, section=9.2 System Efficiency]\n[source=rag_survey_2312, section=Naive RAG]",
+      "keyword_coverage": 0.3333333333333333,
+      "source_hit": true,
+      "section_hit": false,
+      "retrieved": [
+        {
+          "score": 0.8328943848609924,
+          "source": "rag_survey_2312",
+          "section": "Naive RAG",
+          "chunk_id": "rag_survey_2312__struct__0002_03"
+        },
+        {
+          "score": 0.8175323009490967,
+          "source": "rag_survey_2312",
+          "section": "Advanced RAG",
+          "chunk_id": "rag_survey_2312__struct__0003_00"
+        },
+        {
+          "score": 0.7893486022949219,
+          "source": "rag_survey_2404",
+          "section": "9.2 System Efficiency",
+          "chunk_id": "rag_survey_2404__struct__0026_01"
+        },
+        {
+          "score": 0.7786540985107422,
+          "source": "rag_survey_2312",
+          "section": "Naive RAG",
+          "chunk_id": "rag_survey_2312__struct__0002_00"
+        },
+        {
+          "score": 0.7713040113449097,
+          "source": "rag_survey_2404",
+          "section": "4.2 Retrieval Strategy",
+          "chunk_id": "rag_survey_2404__struct__0011_00"
+        }
+      ],
+      "input_tokens": 1341,
+      "output_tokens": 273,
+      "latency_sec": 3.27
+    }
+  },
+  {
+    "id": 5,
+    "question": "What open-domain question answering datasets were used to evaluate the original RAG model?",
+    "expected_keywords": [
+      "Natural Questions",
+      "TriviaQA",
+      "WebQuestions",
+      "CuratedTrec"
+    ],
+    "expected_sources": [
+      "rag_lewis_2020"
+    ],
+    "expected_sections": [
+      "3.1 Open-domain Question Answering"
+    ],
+    "no_rag": {
+      "text": "# RAG Model Evaluation Datasets\n\nThe original RAG (Retrieval-Augmented Generation) model was evaluated on several open-domain question answering datasets:\n\n1. **Natural Questions (NQ)** - Google's dataset with real user queries and Wikipedia answers\n2. **TriviaQA** - Large-scale trivia QA dataset with diverse questions\n3. **WebQuestions** - Questions paired with Freebase answers\n4. **CuratedTREC** - Curated TREC questions for open-domain QA\n\nThese datasets test the model's ability to retrieve relevant documents and generate accurate answers from a large corpus (typically Wikipedia) without task-specific fine-tuning on the retrieval component.",
+      "keyword_coverage": 1.0,
+      "input_tokens": 76,
+      "output_tokens": 163,
+      "latency_sec": 2.15
+    },
+    "rag": {
+      "text": "# Open-domain Question Answering Datasets Used in Original RAG Model\n\nAccording to the provided context, the original RAG model was evaluated on four popular open-domain QA datasets:\n\n1. **Natural Questions (NQ)**\n2. **TriviaQA (TQA)**\n3. **WebQuestions (WQ)**\n4. **CuratedTrec (CT)**\n\nThe context notes that for the smaller datasets (CT and WQ), the researchers followed the DPR approach by initializing CT and WQ models with their NQ RAG model. Additionally, for TQA, the model was evaluated on the TQA Wiki test set to compare with T5 results.\n\nThe evaluation metric used was **Exact Match (EM) scores**.\n\n[source: rag_lewis_2020, section: 3.1 Open-domain Question Answering]",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "retrieved": [
+        {
+          "score": 0.8120684623718262,
+          "source": "rag_survey_2312",
+          "section": "Adaptive Retrieval",
+          "chunk_id": "rag_survey_2312__struct__0032_02"
+        },
+        {
+          "score": 0.7892899513244629,
+          "source": "rag_lewis_2020",
+          "section": "4 Results",
+          "chunk_id": "rag_lewis_2020__struct__0012_00"
+        },
+        {
+          "score": 0.7806761264801025,
+          "source": "rag_lewis_2020",
+          "section": "3.1 Open-domain Question Answering",
+          "chunk_id": "rag_lewis_2020__struct__0008_00"
+        },
+        {
+          "score": 0.7772803902626038,
+          "source": "rag_survey_2312",
+          "section": "Evaluation Benchmarks and Tools",
+          "chunk_id": "rag_survey_2312__struct__0039_00"
+        },
+        {
+          "score": 0.7764259576797485,
+          "source": "rag_survey_2312",
+          "section": "Downstream Task",
+          "chunk_id": "rag_survey_2312__struct__0034_00"
+        }
+      ],
+      "input_tokens": 1744,
+      "output_tokens": 200,
+      "latency_sec": 2.05
+    }
+  },
+  {
+    "id": 6,
+    "question": "Why is query optimization needed in Naive RAG, and what techniques address it?",
+    "expected_keywords": [
+      "query expansion",
+      "query transformation",
+      "query routing"
+    ],
+    "expected_sources": [
+      "rag_survey_2312"
+    ],
+    "expected_sections": [
+      "Query Optimization"
+    ],
+    "no_rag": {
+      "text": "# Query Optimization in Naive RAG\n\n## Why It's Needed\n\nNaive RAG often fails because:\n\n1. **Semantic mismatch** - User queries may not match document embeddings well\n2. **Poor retrieval quality** - Irrelevant documents returned, missing relevant ones\n3. **Complexity loss** - Simple queries don't capture multi-faceted information needs\n4. **Ambiguity** - Vague queries retrieve noisy results\n\n## Key Optimization Techniques\n\n### 1. **Query Expansion**\n- Rephrase/expand queries to capture multiple angles\n- Generate hypothetical answers or related questions\n- Example: \"AI safety\" → \"AI safety, machine alignment, existential risk, AGI control\"\n\n### 2. **Query Transformation**\n- Decompose complex queries into sub-queries\n- Rewrite for better semantic matching\n- Add context or clarification\n\n### 3. **Multi-Query Retrieval**\n- Generate multiple query variations\n- Retrieve from each, aggregate results\n- Reduces sensitivity to single query formulation\n\n### 4. **Hypothetical Document Embeddings (HyDE)**\n- Generate hypothetical documents matching the query intent\n- Embed and use for retrieval (often better aligned than query embeddings)\n\n### 5. **Re-ranking**\n- Retrieve larger initial set, then rank by relevance\n- Use cross-encoders or LLM-based ranking\n\n### 6. **Metadata Filtering**\n- Add filters (date, source, category) to constrain retrieval space\n- Reduces noise from irrelevant documents\n\nThese techniques improve retrieval precision and recall, leading to better RAG output quality.",
+      "keyword_coverage": 0.6666666666666666,
+      "input_tokens": 75,
+      "output_tokens": 383,
+      "latency_sec": 4.3
+    },
+    "rag": {
+      "text": "Based on the provided context, **I cannot find specific information about why query optimization is needed in Naive RAG or what techniques address it.**\n\nThe documents describe the three stages of RAG (Naive RAG, Advanced RAG, and Modular RAG) and mention that:\n\n- Naive RAG follows a traditional \"Retrieve-Read\" framework consisting of indexing, retrieval, and generation\n- Advanced RAG introduces improvements to overcome limitations of Naive RAG, including \"pre-retrieval and post-retrieval strategies\" and optimization methods to streamline the retrieval process\n\nHowever, the provided excerpts do not specifically discuss query optimization techniques or their necessity in Naive RAG. While the document structure mentions \"Section III focuses on optimization methods in retrieval, including indexing, query and embedding optimization,\" the actual details about query optimization are not included in the context provided.\n\nTo answer your question comprehensively, I would need access to Section III of the survey document that specifically covers retrieval optimization methods.",
+      "keyword_coverage": 0.0,
+      "source_hit": true,
+      "section_hit": false,
+      "retrieved": [
+        {
+          "score": 0.7980875968933105,
+          "source": "rag_survey_2312",
+          "section": "Introduction",
+          "chunk_id": "rag_survey_2312__struct__0000_05"
+        },
+        {
+          "score": 0.7905042767524719,
+          "source": "rag_survey_2312",
+          "section": "Overview of RAG ",
+          "chunk_id": "rag_survey_2312__struct__0001_01"
+        },
+        {
+          "score": 0.7683318257331848,
+          "source": "rag_survey_2312",
+          "section": "Advanced RAG",
+          "chunk_id": "rag_survey_2312__struct__0003_00"
+        },
+        {
+          "score": 0.7674441933631897,
+          "source": "rag_survey_2312",
+          "section": "Naive RAG",
+          "chunk_id": "rag_survey_2312__struct__0002_00"
+        },
+        {
+          "score": 0.7567695379257202,
+          "source": "rag_survey_2312",
+          "section": "Naive RAG",
+          "chunk_id": "rag_survey_2312__struct__0002_03"
+        }
+      ],
+      "input_tokens": 1527,
+      "output_tokens": 218,
+      "latency_sec": 2.56
+    }
+  },
+  {
+    "id": 7,
+    "question": "What is the role of indexing in the pre-retrieval stage of a RAG pipeline?",
+    "expected_keywords": [
+      "inverted index",
+      "indexing",
+      "semantically"
+    ],
+    "expected_sources": [
+      "rag_survey_2404"
+    ],
+    "expected_sections": [
+      "3.1 Indexing",
+      "3 Pre-Retrieval"
+    ],
+    "no_rag": {
+      "text": "# Indexing in RAG Pre-Retrieval Stage\n\nIndexing is a foundational step that prepares documents for efficient retrieval. Its key roles are:\n\n1. **Document Processing**: Breaks down source documents into chunks/passages that are manageable and semantically meaningful.\n\n2. **Embedding Generation**: Converts text chunks into dense vector representations using embedding models, enabling semantic similarity matching.\n\n3. **Storage Organization**: Organizes embeddings and metadata in a vector database (e.g., Pinecone, Weaviate, FAISS) for fast lookup.\n\n4. **Enabling Fast Retrieval**: Creates indexed structures that allow quick similarity search rather than scanning all documents, dramatically improving speed.\n\n5. **Optimization**: Applies techniques like dimensionality reduction or quantization to balance search speed and relevance.\n\nWithout proper indexing, the retrieval stage would be slow and inefficient, making the entire RAG pipeline impractical for real-time applications.",
+      "keyword_coverage": 0.6666666666666666,
+      "input_tokens": 78,
+      "output_tokens": 217,
+      "latency_sec": 2.87
+    },
+    "rag": {
+      "text": "# Role of Indexing in the Pre-Retrieval Stage of RAG\n\nBased on the provided documents, indexing plays a foundational role in the pre-retrieval stage of a RAG pipeline:\n\n## Primary Functions\n\n**1. Foundation for Information Retrieval**\nIndexing establishes an organized system to enable fast and accurate retrieval of information. It serves as the basis for retrieving relevant information through the retriever model based on specific queries.\n\n**2. Data Preparation**\nThe indexing process involves essential data preparation steps including:\n- Text normalization processes such as tokenization, stemming, and removal of stop words\n- Organization of text segments into sentences or paragraphs to facilitate focused searches\n\n**3. Task-Specific Organization**\nThe specificity of indexing depends on the task and data type:\n- **Sentence-level indexing** is beneficial for question-answering systems to precisely locate answers\n- **Document-level indexing** is more appropriate for document summarization to understand main concepts and ideas\n\n**4. Advanced Techniques**\nIn Advanced RAG systems, indexing is refined through:\n- Sliding window approach\n- Fine-grained segmentation\n- Incorporation of metadata\n\n**5. Semantic Representation**\nModern indexing leverages deep learning and pretrained language models to generate semantic vector representations of texts, which are stored to enable rapid and precise retrieval from extensive data collections.\n\n[source=rag_survey_2404, section=2.2.1 Pre-Retrieval; source=rag_survey_2404, section=2.1.1 Indexing; source=rag_survey_2312, section=Advanced RAG]",
+      "keyword_coverage": 0.3333333333333333,
+      "source_hit": true,
+      "section_hit": false,
+      "retrieved": [
+        {
+          "score": 0.7918611168861389,
+          "source": "rag_survey_2312",
+          "section": "Naive RAG",
+          "chunk_id": "rag_survey_2312__struct__0002_03"
+        },
+        {
+          "score": 0.7862196564674377,
+          "source": "rag_survey_2404",
+          "section": "2.2 RAG Paradigm",
+          "chunk_id": "rag_survey_2404__struct__0004_00"
+        },
+        {
+          "score": 0.7784002423286438,
+          "source": "rag_survey_2312",
+          "section": "Advanced RAG",
+          "chunk_id": "rag_survey_2312__struct__0003_00"
+        },
+        {
+          "score": 0.7737929821014404,
+          "source": "rag_survey_2404",
+          "section": "4.2 Retrieval Strategy",
+          "chunk_id": "rag_survey_2404__struct__0011_00"
+        },
+        {
+          "score": 0.7694405913352966,
+          "source": "rag_survey_2404",
+          "section": "2.1 Basic RAG Workflow",
+          "chunk_id": "rag_survey_2404__struct__0003_00"
+        }
+      ],
+      "input_tokens": 1505,
+      "output_tokens": 375,
+      "latency_sec": 3.58
+    }
+  },
+  {
+    "id": 8,
+    "question": "What re-ranking techniques are used in the post-retrieval stage of RAG?",
+    "expected_keywords": [
+      "re-ranking",
+      "unsupervised",
+      "supervised"
+    ],
+    "expected_sources": [
+      "rag_survey_2404"
+    ],
+    "expected_sections": [
+      "5.1 Re-Ranking",
+      "5 Post-Retrieval"
+    ],
+    "no_rag": {
+      "text": "# Re-ranking Techniques in RAG Post-Retrieval Stage\n\n## Common Approaches\n\n1. **Cross-Encoder Models**\n   - Fine-tuned transformer models that score relevance between query and document pairs\n   - Examples: ColBERT, MonoT5, mT5-based rankers\n   - More accurate but slower than bi-encoders\n\n2. **LLM-based Re-ranking**\n   - Use the same LLM to score or rank retrieved documents\n   - Leverages the LLM's understanding of query intent\n   - Can be done via direct scoring or pairwise comparisons\n\n3. **Semantic Similarity Scoring**\n   - Calculate similarity between query and document embeddings\n   - Use cosine similarity or other distance metrics\n   - Fast but less nuanced than cross-encoders\n\n4. **Hybrid Re-ranking**\n   - Combine multiple signals: lexical match, semantic similarity, metadata\n   - Weighted scoring across different criteria\n   - Better recall and precision balance\n\n5. **Query Expansion & Rewriting**\n   - Reformulate the query before ranking\n   - Generate multiple query variants and aggregate results\n   - Improves matching for complex information needs\n\n6. **Diversity-aware Re-ranking**\n   - Penalize similar documents to reduce redundancy\n   - Maximum Marginal Relevance (MMR)\n   - Maximal Marginal Relevance variants\n\n## Key Trade-offs\n- **Speed vs. Accuracy**: Cross-encoders are slower but more accurate\n- **Cost**: LLM-based re-ranking increases inference costs\n- **Simplicity**: Embedding-based methods are easier to implement\n\nWould you like details on any specific technique?",
+      "keyword_coverage": 0.3333333333333333,
+      "input_tokens": 76,
+      "output_tokens": 392,
+      "latency_sec": 4.1
+    },
+    "rag": {
+      "text": "# Re-Ranking Techniques in RAG Post-Retrieval Stage\n\nBased on the provided documents, the following re-ranking techniques are used in the post-retrieval stage of RAG systems:\n\n## Main Approaches\n\n**Re-ranking methods** are employed to reorder retrieved documents and prioritize those most likely to contribute meaningfully to the final output. These methods leverage various strategies, including:\n\n1. **Unsupervised Re-ranking Techniques**: These do not rely on labeled data for training. They use strategies such as:\n   - Pointwise methods\n   - Listwise methods\n   - Pairwise methods\n   \n   These methods rank documents based on LLM outputs without the need for supervised fine-tuning. An example mentioned is **In-Context RALM**, which employs unsupervised re-ranking.\n\n2. **Supervised Learning**: Re-ranking can also employ supervised learning approaches.\n\n3. **Data Augmentation**: This is listed as another strategy for optimizing re-ranking.\n\nThe overall goal of re-ranking is to optimize the alignment between retrieved content and the desired response, thereby improving the overall effectiveness of RAG systems.\n\n---\n\n**Sources:**\n- [source=rag_survey_2404, section=5 Post-Retrieval, 5.1 Re-Ranking]",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "retrieved": [
+        {
+          "score": 0.8319315910339355,
+          "source": "rag_survey_2312",
+          "section": "Naive RAG",
+          "chunk_id": "rag_survey_2312__struct__0002_03"
+        },
+        {
+          "score": 0.8305579423904419,
+          "source": "rag_survey_2404",
+          "section": "5 Post-Retrieval",
+          "chunk_id": "rag_survey_2404__struct__0012_00"
+        },
+        {
+          "score": 0.8253675699234009,
+          "source": "rag_survey_2404",
+          "section": "5.2 Filtering",
+          "chunk_id": "rag_survey_2404__struct__0014_00"
+        },
+        {
+          "score": 0.805992841720581,
+          "source": "rag_survey_2404",
+          "section": "4.2 Retrieval Strategy",
+          "chunk_id": "rag_survey_2404__struct__0011_00"
+        },
+        {
+          "score": 0.8050048351287842,
+          "source": "rag_survey_2312",
+          "section": "Advanced RAG",
+          "chunk_id": "rag_survey_2312__struct__0003_00"
+        }
+      ],
+      "input_tokens": 1354,
+      "output_tokens": 298,
+      "latency_sec": 3.55
+    }
+  },
+  {
+    "id": 9,
+    "question": "What are the main challenges and future directions for RAG systems?",
+    "expected_keywords": [
+      "efficiency",
+      "multimodal",
+      "challenges"
+    ],
+    "expected_sources": [
+      "rag_survey_2404",
+      "rag_survey_2312"
+    ],
+    "expected_sections": [
+      "9 Challenges and Future Directions",
+      "Discussion and Future Prospects"
+    ],
+    "no_rag": {
+      "text": "# Main Challenges for RAG Systems\n\n**Retrieval Quality**\n- Irrelevant or low-quality document chunks returned\n- Poor performance with domain-specific queries\n- Difficulty with multi-hop reasoning requiring multiple documents\n\n**Context Management**\n- Limited context window in LLMs\n- Lost information when aggregating many documents\n- Token budget constraints\n\n**Latency & Cost**\n- Slow retrieval operations at scale\n- Expensive embedding computations\n- Infrastructure overhead\n\n**Hallucinations**\n- LLM generating false information despite retrieved context\n- Outdated or contradictory retrieved documents\n\n**Integration Complexity**\n- Keeping knowledge bases synchronized\n- Managing version control of documents\n- Handling structured vs. unstructured data\n\n# Future Directions\n\n**Adaptive Retrieval**\n- Retrieval only when needed (selective RAG)\n- Dynamic chunk sizing based on query complexity\n- Routing queries to specialized retrievers\n\n**Hybrid Approaches**\n- Combining RAG with fine-tuning\n- Integrating knowledge graphs with dense retrieval\n- Multi-stage retrieval pipelines\n\n**Better Ranking**\n- Context-aware reranking models\n- Learning-to-rank approaches\n- Cross-encoder improvements\n\n**Agentic Systems**\n- Iterative retrieval and synthesis\n- Query decomposition and planning\n- Tools for verification and fact-checking\n\n**Infrastructure**\n- Faster embedding models\n- Efficient indexing techniques\n- Distributed retrieval systems",
+      "keyword_coverage": 0.3333333333333333,
+      "input_tokens": 71,
+      "output_tokens": 336,
+      "latency_sec": 4.03
+    },
+    "rag": {
+      "text": "# Main Challenges and Future Directions for RAG Systems\n\nBased on the provided context, RAG systems face several significant challenges:\n\n## Key Challenges\n\nAccording to the sources, the evolving landscape of RAG systems faces challenges that impact:\n\n1. **Quality of Generated Outputs** - Ensuring the accuracy and relevance of generated responses\n2. **System Efficiency** - Improving the computational and operational performance of RAG systems\n3. **Integration of Multimodal Data** - Effectively incorporating and processing various types of data (text, images, audio, video)\n\n## Future Research Directions\n\nThe sources indicate several areas requiring further development:\n\n1. **Comprehensive Evaluation Frameworks** - Ongoing development of robust evaluation metrics and benchmarks to assess RAG system performance across diverse scenarios\n2. **Real-world Application Robustness** - Addressing challenges specific to real-world deployment, including counterfactual robustness and integration requirements\n3. **Specialization and Optimization** - Optimizing RAG systems to better serve production environments\n4. **Multi-modal Expansion** - Continuing to advance multimodal RAG capabilities beyond text-based question-answering to include images, audio, and video\n5. **Integrated Platform Development** - Moving toward a fully integrated, comprehensive platform concept for enterprise applications\n\nThe sources emphasize that addressing these challenges is essential for improving RAG system effectiveness, scalability, and applicability across increasingly dynamic and complex information landscapes.\n\n[source=rag_survey_2404, section=9 Challenges and Future Directions]\n[source=rag_survey_2312, section=Discussion and Future Prospects]\n[source=rag_survey_2312, section=Conclusion]",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "retrieved": [
+        {
+          "score": 0.8728854060173035,
+          "source": "rag_survey_2312",
+          "section": "Discussion and Future Prospects",
+          "chunk_id": "rag_survey_2312__struct__0040_01"
+        },
+        {
+          "score": 0.845933735370636,
+          "source": "rag_survey_2404",
+          "section": "9 Challenges and Future Directions",
+          "chunk_id": "rag_survey_2404__struct__0024_00"
+        },
+        {
+          "score": 0.792731523513794,
+          "source": "rag_survey_2312",
+          "section": "Task and Evaluation",
+          "chunk_id": "rag_survey_2312__struct__0033_01"
+        },
+        {
+          "score": 0.7874339818954468,
+          "source": "rag_survey_2404",
+          "section": "7 Evaluation in RAG",
+          "chunk_id": "rag_survey_2404__struct__0018_02"
+        },
+        {
+          "score": 0.773909866809845,
+          "source": "rag_survey_2312",
+          "section": "Conclusion",
+          "chunk_id": "rag_survey_2312__struct__0047_00"
+        }
+      ],
+      "input_tokens": 898,
+      "output_tokens": 382,
+      "latency_sec": 3.38
+    }
+  },
+  {
+    "id": 10,
+    "question": "What quality scores and required abilities are used to evaluate RAG models?",
+    "expected_keywords": [
+      "quality scores",
+      "required abilities"
+    ],
+    "expected_sources": [
+      "rag_survey_2312"
+    ],
+    "expected_sections": [
+      "Evaluation Aspects",
+      "Quality Scores",
+      "Required Abilities"
+    ],
+    "no_rag": {
+      "text": "# RAG Model Evaluation Metrics\n\n## Quality Scores\n\n1. **Retrieval Metrics**\n   - Precision@K, Recall@K\n   - Mean Reciprocal Rank (MRR)\n   - Normalized Discounted Cumulative Gain (NDCG)\n\n2. **Generation Metrics**\n   - BLEU, ROUGE, METEOR (text similarity)\n   - BERTScore (semantic similarity)\n   - Perplexity\n\n3. **End-to-End Metrics**\n   - Exact Match (EM)\n   - F1 Score (for QA tasks)\n   - RAGAS metrics (Retrieval Augmented Generation Assessment)\n\n4. **RAGAS Framework**\n   - Faithfulness (answer grounded in context)\n   - Answer Relevancy (answer addresses question)\n   - Context Relevancy (retrieved docs are relevant)\n   - Context Precision (ranked by importance)\n\n## Required Abilities\n\n1. **Retrieval**\n   - Find relevant documents/passages\n   - Handle semantic similarity\n   - Rank results by relevance\n\n2. **Comprehension**\n   - Understand retrieved context\n   - Extract key information\n\n3. **Generation**\n   - Synthesize coherent answers\n   - Maintain factual accuracy\n   - Avoid hallucinations\n\n4. **Context Integration**\n   - Incorporate retrieved info naturally\n   - Balance multiple sources\n\nThese metrics collectively measure retrieval effectiveness, answer quality, and factual grounding.",
+      "keyword_coverage": 1.0,
+      "input_tokens": 72,
+      "output_tokens": 352,
+      "latency_sec": 3.48
+    },
+    "rag": {
+      "text": "# RAG Model Evaluation: Quality Scores and Required Abilities\n\nBased on the provided documents, the context mentions that contemporary evaluation practices of RAG models emphasize **three primary quality scores and four essential abilities**, but the specific details of these are not fully enumerated in the provided excerpts.\n\n## What is provided:\n\n**Evaluation Targets:**\nThe documents identify two principal targets of RAG model evaluation:\n1. **Retrieval Quality** - evaluated using metrics such as Hit Rate, MRR (Mean Reciprocal Rank), and NDCG\n2. **Generation Quality** - assessed based on the generator's capacity to synthesize coherent and relevant answers from retrieved context\n\n**Evaluation Aspects** (which appear to correspond to the evaluation framework):\nAccording to Table III in the documents, evaluation aspects include:\n- Context Relevance\n- Faithfulness\n- Answer Relevance\n- Noise Robustness\n- Negative Rejection\n- Information Integration\n- Counterfactual Robustness\n\n**Evaluation Tools and Benchmarks:**\n- Benchmarks: RGB, RECALL, and CRUD\n- Automated tools: RAGAS, ARES, and TruLens\n\nHowever, the complete enumeration of the \"three primary quality scores\" and \"four essential abilities\" is not explicitly detailed in the provided document excerpts.\n\n[source=rag_survey_2312, section=Evaluation Aspects]\n[source=rag_survey_2312, section=Evaluation Target]\n[source=rag_survey_2312, section=Evaluation Benchmarks and Tools]",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "retrieved": [
+        {
+          "score": 0.8753957748413086,
+          "source": "rag_survey_2312",
+          "section": "Evaluation Aspects",
+          "chunk_id": "rag_survey_2312__struct__0036_00"
+        },
+        {
+          "score": 0.84344482421875,
+          "source": "rag_survey_2312",
+          "section": "Required Abilities",
+          "chunk_id": "rag_survey_2312__struct__0038_03"
+        },
+        {
+          "score": 0.8005498051643372,
+          "source": "rag_survey_2312",
+          "section": "Evaluation Benchmarks and Tools",
+          "chunk_id": "rag_survey_2312__struct__0039_00"
+        },
+        {
+          "score": 0.7972631454467773,
+          "source": "rag_survey_2312",
+          "section": "Evaluation Target",
+          "chunk_id": "rag_survey_2312__struct__0035_00"
+        },
+        {
+          "score": 0.7890251278877258,
+          "source": "rag_survey_2312",
+          "section": "Discussion and Future Prospects",
+          "chunk_id": "rag_survey_2312__struct__0040_00"
+        }
+      ],
+      "input_tokens": 1529,
+      "output_tokens": 361,
+      "latency_sec": 4.2
+    }
+  }
+]
