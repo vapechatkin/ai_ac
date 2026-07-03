@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "question": "What is the difference between RAG-Sequence and RAG-Token models?",
+    "expected_keywords": ["RAG-Sequence", "RAG-Token", "marginal"],
+    "expected_sources": ["rag_lewis_2020"],
+    "expected_sections": ["2.1 Models"]
+  },
+  {
+    "id": 2,
+    "question": "What retriever and generator components does the original RAG paper (Lewis et al.) use?",
+    "expected_keywords": ["DPR", "BART"],
+    "expected_sources": ["rag_lewis_2020"],
+    "expected_sections": ["2.2 Retriever: DPR", "2.3 Generator: BART"]
+  },
+  {
+    "id": 3,
+    "question": "What are the three RAG paradigms described in the RAG survey (Naive, Advanced, Modular)?",
+    "expected_keywords": ["Naive RAG", "Advanced RAG", "Modular RAG"],
+    "expected_sources": ["rag_survey_2312"],
+    "expected_sections": ["Naive RAG", "Advanced RAG", "Modular RAG"]
+  },
+  {
+    "id": 4,
+    "question": "What chunking strategies are used for indexing optimization in RAG systems?",
+    "expected_keywords": ["fixed", "sliding window", "recursive"],
+    "expected_sources": ["rag_survey_2312"],
+    "expected_sections": ["Chunking Strategy"]
+  },
+  {
+    "id": 5,
+    "question": "What open-domain question answering datasets were used to evaluate the original RAG model?",
+    "expected_keywords": ["Natural Questions", "TriviaQA", "WebQuestions", "CuratedTrec"],
+    "expected_sources": ["rag_lewis_2020"],
+    "expected_sections": ["3.1 Open-domain Question Answering"]
+  },
+  {
+    "id": 6,
+    "question": "Why is query optimization needed in Naive RAG, and what techniques address it?",
+    "expected_keywords": ["query expansion", "query transformation", "query routing"],
+    "expected_sources": ["rag_survey_2312"],
+    "expected_sections": ["Query Optimization"]
+  },
+  {
+    "id": 7,
+    "question": "What is the role of indexing in the pre-retrieval stage of a RAG pipeline?",
+    "expected_keywords": ["inverted index", "indexing", "semantically"],
+    "expected_sources": ["rag_survey_2404"],
+    "expected_sections": ["3.1 Indexing", "3 Pre-Retrieval"]
+  },
+  {
+    "id": 8,
+    "question": "What re-ranking techniques are used in the post-retrieval stage of RAG?",
+    "expected_keywords": ["re-ranking", "unsupervised", "supervised"],
+    "expected_sources": ["rag_survey_2404"],
+    "expected_sections": ["5.1 Re-Ranking", "5 Post-Retrieval"]
+  },
+  {
+    "id": 9,
+    "question": "What are the main challenges and future directions for RAG systems?",
+    "expected_keywords": ["efficiency", "multimodal", "challenges"],
+    "expected_sources": ["rag_survey_2404", "rag_survey_2312"],
+    "expected_sections": ["9 Challenges and Future Directions", "Discussion and Future Prospects"]
+  },
+  {
+    "id": 10,
+    "question": "What quality scores and required abilities are used to evaluate RAG models?",
+    "expected_keywords": ["quality scores", "required abilities"],
+    "expected_sources": ["rag_survey_2312"],
+    "expected_sections": ["Evaluation Aspects", "Quality Scores", "Required Abilities"]
+  }
+]
