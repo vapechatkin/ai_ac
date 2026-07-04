@@ -1,0 +1,449 @@
+{
+  "summary": {
+    "n_questions": 10,
+    "n_answered": 8,
+    "n_idk": 2,
+    "answered_sources_rate": 1.0,
+    "answered_citations_rate": 1.0,
+    "answered_citations_grounded_avg": 0.85,
+    "answered_matches_citations_rate": 1.0,
+    "answered_faithfulness_avg": 8.5,
+    "keyword_coverage_avg": 0.62,
+    "source_hit_rate": 0.8,
+    "section_hit_rate": 0.6,
+    "off_topic_total": 3,
+    "off_topic_idk": 3
+  },
+  "on_topic": [
+    {
+      "id": 1,
+      "question": "What is the difference between RAG-Sequence and RAG-Token models?",
+      "answer": "The main difference between RAG-Sequence and RAG-Token models lies in how they handle retrieved documents during generation:\n\n**RAG-Sequence** uses the same retrieved document to generate the complete output sequence. It marginalizes over the top-K retrieved documents, meaning a single document is selected as a latent variable and used to generate the entire output sequence.\n\n**RAG-Token** allows a different latent document to be drawn for each target token. This means the generator can choose content from several different documents when producing an answer, marginalizing over documents separately for each token position.\n\nIn practical terms, RAG-Sequence commits to one document for the entire generation, while RAG-Token is more flexible and can use different documents for different parts of the answer. The two models are equivalent only for sequence classification tasks where the target is a single token.",
+      "sources": [
+        {
+          "source": "rag_lewis_2020",
+          "section": "2.1 Models",
+          "chunk_id": "rag_lewis_2020__struct__0002_00"
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": "rag_lewis_2020__struct__0002_00",
+          "quote": "The RAG-Sequence model uses the same retrieved document to generate the complete sequence."
+        },
+        {
+          "chunk_id": "rag_lewis_2020__struct__0002_00",
+          "quote": "In the RAG-Token model we can draw a different latent document for each target token and marginalize accordingly. This allows the generator to choose content from several documents when producing an answer."
+        },
+        {
+          "chunk_id": "rag_lewis_2020__struct__0002_00",
+          "quote": "RAG can be used for sequence classification tasks by considering the target class as a target sequence of length one, in which case RAG-Sequence and RAG-Token are equivalent."
+        }
+      ],
+      "idk": false,
+      "idk_reason": null,
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": true,
+      "has_citations": true,
+      "citations_grounded": 0.67,
+      "answer_matches_citations": true,
+      "faithfulness_score": 10,
+      "faithfulness_reason": "All claims in the answer are directly supported by the citations. The explanation of RAG-Sequence using the same document for the complete sequence, RAG-Token drawing different documents for each token, the flexibility distinction, and the equivalence for single-token tasks are all accurately traced to the provided quotes.",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "input_tokens": 2440,
+      "output_tokens": 525,
+      "latency_sec": 5.84
+    },
+    {
+      "id": 2,
+      "question": "What retriever and generator components does the original RAG paper (Lewis et al.) use?",
+      "answer": "I don't know based on the provided documents. The retrieved context is not relevant enough to answer this question reliably. Could you please clarify or rephrase your question?",
+      "sources": [],
+      "citations": [],
+      "idk": true,
+      "idk_reason": "model_declined",
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": false,
+      "has_citations": false,
+      "citations_grounded": 0.0,
+      "answer_matches_citations": false,
+      "faithfulness_score": 0,
+      "faithfulness_reason": "no citations",
+      "keyword_coverage": 0.0,
+      "source_hit": false,
+      "section_hit": false,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "latency_sec": 1.98
+    },
+    {
+      "id": 3,
+      "question": "What are the three RAG paradigms described in the RAG survey (Naive, Advanced, Modular)?",
+      "answer": "The RAG survey describes three stages of RAG paradigms: Naive RAG, Advanced RAG, and Modular RAG.\n\nNaive RAG represents the earliest methodology that gained prominence shortly after the widespread adoption of ChatGPT. It follows a traditional process that includes three main steps: indexing, retrieval, and generation, which is characterized as a \"Retrieve-Read\" framework. The indexing step involves cleaning and extracting raw data in diverse formats (PDF, HTML, Word, Markdown), converting it to plain text, segmenting text into chunks, encoding these chunks into vector representations using an embedding model, and storing them in a vector database. The retrieval step retrieves the top k chunks most relevant to a question based on semantic similarity. The generation step inputs the original question and retrieved chunks into an LLM to generate the final answer.\n\nAdvanced RAG introduces specific improvements to overcome the limitations of Naive RAG by focusing on enhancing retrieval quality through pre-retrieval and post-retrieval strategies. It refines indexing techniques through sliding window approaches, fine-grained segmentation, and metadata incorporation, while also incorporating optimization methods to streamline the retrieval process.\n\nModular RAG is mentioned as the third paradigm, developed as a response to specific shortcomings in Naive RAG, though detailed information about its specific characteristics is not provided in the available context.",
+      "sources": [
+        {
+          "source": "rag_survey_2312",
+          "section": "Introduction",
+          "chunk_id": "rag_survey_2312__struct__0000_06"
+        },
+        {
+          "source": "rag_survey_2312",
+          "section": "Naive RAG",
+          "chunk_id": "rag_survey_2312__struct__0002_00"
+        },
+        {
+          "source": "rag_survey_2312",
+          "section": "Advanced RAG",
+          "chunk_id": "rag_survey_2312__struct__0003_00"
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": "rag_survey_2312__struct__0000_06",
+          "quote": "hree stages: Naive RAG, Advanced RAG, and Modular RAG, as showed in Figure 3. Despite RAG method are cost-effective and surpass the performance of the native LLM, they also exhibit several limitations."
+        }
+      ],
+      "idk": false,
+      "idk_reason": null,
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": true,
+      "has_citations": true,
+      "citations_grounded": 1.0,
+      "answer_matches_citations": true,
+      "faithfulness_score": 7,
+      "faithfulness_reason": "The answer's main claim about three RAG stages is supported by the citation. However, the detailed descriptions of Naive RAG (indexing, retrieval, generation steps, specific techniques), Advanced RAG (pre-retrieval and post-retrieval strategies, sliding window, metadata), and Modular RAG characteristics are NOT supported by the provided citation, which only mentions the three stages exist. The answer invents substantial details beyond what the single citation supports.",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "input_tokens": 4841,
+      "output_tokens": 1400,
+      "latency_sec": 9.43
+    },
+    {
+      "id": 4,
+      "question": "What chunking strategies are used for indexing optimization in RAG systems?",
+      "answer": "According to the context, Advanced RAG refines its indexing techniques through the use of a sliding window approach and fine-grained segmentation. These are the chunking strategies mentioned for indexing optimization in RAG systems. Additionally, the incorporation of metadata is used to enhance the indexing process. The context also mentions that \"Advanced chunking methods\" and \"hybrid search strategies\" could offer trade-offs that maximize both retrieval precision and speed as part of modular workflow optimization.",
+      "sources": [
+        {
+          "source": "rag_survey_2312",
+          "section": "Advanced RAG",
+          "chunk_id": "rag_survey_2312__struct__0003_00"
+        },
+        {
+          "source": "rag_survey_2404",
+          "section": "9.2 System Efficiency",
+          "chunk_id": "rag_survey_2404__struct__0026_01"
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": "rag_survey_2312__struct__0003_00",
+          "quote": "To tackle the indexing issues, Advanced RAG refines its indexing techniques through the use of a sliding window approach, fine-grained segmentation, and the incorporation of metadata."
+        },
+        {
+          "chunk_id": "rag_survey_2404__struct__0026_01",
+          "quote": "Advanced chunking methods and hybrid search strategies could offer trade-offs that maximize both retrieval precision and speed."
+        }
+      ],
+      "idk": false,
+      "idk_reason": null,
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": true,
+      "has_citations": true,
+      "citations_grounded": 1.0,
+      "answer_matches_citations": true,
+      "faithfulness_score": 10,
+      "faithfulness_reason": "Every claim in the answer is directly supported by the citations. The answer accurately references: (1) sliding window approach, fine-grained segmentation, and metadata incorporation from the first citation, and (2) advanced chunking methods and hybrid search strategies from the second citation. No unsupported facts are introduced.",
+      "keyword_coverage": 0.33,
+      "source_hit": true,
+      "section_hit": false,
+      "input_tokens": 2405,
+      "output_tokens": 427,
+      "latency_sec": 3.48
+    },
+    {
+      "id": 5,
+      "question": "What open-domain question answering datasets were used to evaluate the original RAG model?",
+      "answer": "The original RAG model was evaluated on four open-domain question answering datasets: Natural Questions (NQ), TriviaQA (TQA), WebQuestions (WQ), and CuratedTrec (CT). The evaluations used Exact Match (EM) scores as the metric. For TriviaQA, RAG was also evaluated on the TQA Wiki test set for comparison with T5.",
+      "sources": [
+        {
+          "source": "rag_lewis_2020",
+          "section": "3.1 Open-domain Question Answering",
+          "chunk_id": "rag_lewis_2020__struct__0008_00"
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": "rag_lewis_2020__struct__0008_00",
+          "quote": "We consider four popular open-domain QA datasets: Natural Questions (NQ) [29], TriviaQA (TQA) [24]. WebQuestions (WQ) [3] and CuratedTrec (CT) [2]."
+        },
+        {
+          "chunk_id": "rag_lewis_2020__struct__0008_00",
+          "quote": "We use the same train/dev/test splits as prior work [31, 26] and report Exact Match (EM) scores. For TQA, to compare with T5 [52], we also evaluate on the TQA Wiki test set."
+        }
+      ],
+      "idk": false,
+      "idk_reason": null,
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": true,
+      "has_citations": true,
+      "citations_grounded": 1.0,
+      "answer_matches_citations": true,
+      "faithfulness_score": 10,
+      "faithfulness_reason": "All claims in the answer are directly supported by the citations. The four datasets (NQ, TQA, WQ, CT) are explicitly listed in the first citation. The use of EM scores as the metric is stated in the second citation. The evaluation on TQA Wiki test set for comparison with T5 is also explicitly mentioned in the second citation.",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "input_tokens": 2808,
+      "output_tokens": 424,
+      "latency_sec": 2.66
+    },
+    {
+      "id": 6,
+      "question": "Why is query optimization needed in Naive RAG, and what techniques address it?",
+      "answer": "I don't know based on the provided documents. The retrieved context is not relevant enough to answer this question reliably. Could you please clarify or rephrase your question?",
+      "sources": [],
+      "citations": [],
+      "idk": true,
+      "idk_reason": "model_declined",
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": false,
+      "has_citations": false,
+      "citations_grounded": 0.0,
+      "answer_matches_citations": false,
+      "faithfulness_score": 0,
+      "faithfulness_reason": "no citations",
+      "keyword_coverage": 0.0,
+      "source_hit": false,
+      "section_hit": false,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "latency_sec": 2.35
+    },
+    {
+      "id": 7,
+      "question": "What is the role of indexing in the pre-retrieval stage of a RAG pipeline?",
+      "answer": "Indexing plays a foundational role in the pre-retrieval stage of a RAG pipeline. It establishes an organized system to enable fast and accurate retrieval of information. The specificity of indexing depends on the task and data type—for example, sentence-level indexing is beneficial for question-answering systems to precisely locate answers, while document-level indexing is more appropriate for summarizing documents. Efficient indexing involves text normalization processes such as tokenization, stemming, and the removal of stop words. Text segments are then organized into sentences or paragraphs to facilitate more focused searches. Additionally, the integration of deep learning has revolutionized indexing through the use of pretrained language models for generating semantic vector representations of texts, which are stored to enable rapid and precise retrieval from extensive data collections.",
+      "sources": [
+        {
+          "source": "rag_survey_2404",
+          "section": "2.2 RAG Paradigm",
+          "chunk_id": "rag_survey_2404__struct__0004_00"
+        },
+        {
+          "source": "rag_survey_2404",
+          "section": "2.1 Basic RAG Workflow",
+          "chunk_id": "rag_survey_2404__struct__0003_00"
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": "rag_survey_2404__struct__0004_00",
+          "quote": "The process starts with indexing, which establishes an organized system to enable fast and accurate retrieval of information. The specificity of indexing depends on the task and data type. For example, sentence-level indexing is beneficial for question-answering systems to precisely locate answers, while document-level indexing is more appropriate for summarizing documents to understand their main concepts and ideas."
+        },
+        {
+          "chunk_id": "rag_survey_2404__struct__0003_00",
+          "quote": "Efficient retrieval begins with comprehensive indexing, where data preparation is key. This stage involves text normalization processes such as tokenization, stemming, and the removal of stop words to enhance the text's suitability for indexing. Text segments are then organized into sentences or paragraphs to facilitate more focused searches, allowing for the pinpointing of segments containing pertinent keywords. The integration of deep learning has revolutionized indexing through the use of pretrained LMs for generating semantic vector representations of texts."
+        }
+      ],
+      "idk": false,
+      "idk_reason": null,
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": true,
+      "has_citations": true,
+      "citations_grounded": 0.5,
+      "answer_matches_citations": true,
+      "faithfulness_score": 9,
+      "faithfulness_reason": "Nearly all claims are directly supported by citations. The answer accurately reflects the source material about indexing's role, task-dependent specificity, text normalization processes, text segmentation, and deep learning integration with semantic vectors. The only minor issue is that the answer characterizes indexing as part of the 'pre-retrieval stage' while the citations describe it as 'the process starts with indexing' and part of 'efficient retrieval begins with...indexing,' which is slightly more ambiguous about the exact pipeline stage. This is a minor terminological distinction rather than a factual error.",
+      "keyword_coverage": 0.33,
+      "source_hit": true,
+      "section_hit": false,
+      "input_tokens": 2569,
+      "output_tokens": 632,
+      "latency_sec": 4.2
+    },
+    {
+      "id": 8,
+      "question": "What re-ranking techniques are used in the post-retrieval stage of RAG?",
+      "answer": "Re-ranking techniques used in the post-retrieval stage of RAG include unsupervised methods that leverage various strategies. Specifically, unsupervised re-rankers use pointwise, listwise, or pairwise methods to rank documents based on LLM outputs without requiring supervised fine-tuning. For example, In-Context RALM is mentioned as a technique that employs unsupervised re-ranking approaches. More broadly, re-ranking methods leverage various strategies including unsupervised techniques, supervised learning, and data augmentation to reorder retrieved documents and prioritize those most likely to contribute meaningfully to the final output.",
+      "sources": [
+        {
+          "source": "rag_survey_2404",
+          "section": "5 Post-Retrieval",
+          "chunk_id": "rag_survey_2404__struct__0012_00"
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": "rag_survey_2404__struct__0012_00",
+          "quote": "By leveraging various strategies, including unsupervised techniques, supervised learning, and data augmentation, re-ranking aims to optimize the alignment between the retrieved content and the desired response, thereby improving the overall effectiveness of RAG systems"
+        },
+        {
+          "chunk_id": "rag_survey_2404__struct__0012_00",
+          "quote": "Unsupervised re-rankers do not rely on labeled data for training. They use strategies such as pointwise, listwise, or pairwise methods to rank documents based on LLM outputs without the need for supervised fine-tuning."
+        },
+        {
+          "chunk_id": "rag_survey_2404__struct__0012_00",
+          "quote": "For example, In-Context RALM [112] employs"
+        }
+      ],
+      "idk": false,
+      "idk_reason": null,
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": true,
+      "has_citations": true,
+      "citations_grounded": 1.0,
+      "answer_matches_citations": true,
+      "faithfulness_score": 7,
+      "faithfulness_reason": "Most claims are supported by citations. The statements about unsupervised re-rankers using pointwise, listwise, or pairwise methods and not requiring supervised fine-tuning are directly supported. The mention of In-Context RALM as an example is cited, though the citation is incomplete (cuts off at 'employs'). However, the answer states In-Context RALM 'employs unsupervised re-ranking approaches' but the provided citation fragment doesn't complete this claim, making it partially unsupported. The broader claim about re-ranking methods leveraging various strategies is supported by the first citation.",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "input_tokens": 2418,
+      "output_tokens": 502,
+      "latency_sec": 7.78
+    },
+    {
+      "id": 9,
+      "question": "What are the main challenges and future directions for RAG systems?",
+      "answer": "According to the provided context, RAG systems face several main challenges and future directions:\n\nThe evolving landscape of RAG systems faces significant challenges that impact quality, efficiency, and integration. Specifically, the challenges impact three key areas: \"the quality of generated outputs, system efficiency, and the integration of multimodal data.\"\n\nDespite considerable progress in RAG technology, several challenges persist that warrant in-depth research. These include challenges related to: integration, counterfactual robustness, and other complex challenges that RAG systems face in real-world applications.\n\nFuture research directions include:\n1. **Specialization** - optimizing RAG to better serve production environments\n2. **Multi-modal RAG expansion** - RAG has transcended its initial text-based question-answering confines, embracing diverse modal data including images, audio, and video, with innovative multimodal models being developed\n3. **Evaluation frameworks** - the ongoing development of comprehensive evaluation frameworks and metrics is essential for advancing the field and ensuring RAG systems meet the demands of an increasingly dynamic and complex information landscape\n4. **Integrated platforms** - a fully integrated, comprehensive platform concept is still in the future, requiring further innovation and development",
+      "sources": [
+        {
+          "source": "rag_survey_2404",
+          "section": "9 Challenges and Future Directions",
+          "chunk_id": "rag_survey_2404__struct__0024_00"
+        },
+        {
+          "source": "rag_survey_2312",
+          "section": "Discussion and Future Prospects",
+          "chunk_id": "rag_survey_2312__struct__0040_01"
+        },
+        {
+          "source": "rag_survey_2404",
+          "section": "7 Evaluation in RAG",
+          "chunk_id": "rag_survey_2404__struct__0018_02"
+        },
+        {
+          "source": "rag_survey_2312",
+          "section": "Conclusion",
+          "chunk_id": "rag_survey_2312__struct__0047_00"
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": "rag_survey_2404__struct__0024_00",
+          "quote": "The evolving landscape of RAG systems faces significant challenges that impact the quality of generated outputs, system efficiency, and the integration of multimodal data."
+        },
+        {
+          "chunk_id": "rag_survey_2312__struct__0040_01",
+          "quote": "Despite the considerable progress in RAG technology, several challenges persist that warrant in-depth research."
+        },
+        {
+          "chunk_id": "rag_survey_2404__struct__0018_02",
+          "quote": "ntegration, and counterfactual robustness, all of which reflect the complex challenges RAG systems face in real-world applications. The ongoing development of comprehensive evaluation frameworks and metrics is essential for advancing the field, broadening the applicability of RAG systems, and ensuring that they meet the demands of an increasingly dynamic and complex information landscape"
+        },
+        {
+          "chunk_id": "rag_survey_2312__struct__0047_00",
+          "quote": "Specialization - optimizing RAG to better serve production environments."
+        },
+        {
+          "chunk_id": "rag_survey_2312__struct__0047_00",
+          "quote": "RAG has transcended its initial text-based question-answering confines, embracing a diverse array of modal data."
+        },
+        {
+          "chunk_id": "rag_survey_2312__struct__0047_00",
+          "quote": "However, a fully integrated, comprehensive platform concept is still in the future, requiring further innovation and development."
+        }
+      ],
+      "idk": false,
+      "idk_reason": null,
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": true,
+      "has_citations": true,
+      "citations_grounded": 0.67,
+      "answer_matches_citations": true,
+      "faithfulness_score": 7,
+      "faithfulness_reason": "Most claims are supported by citations, but there are some issues: (1) The specific mention of 'images, audio, and video' in the multimodal RAG expansion section is not explicitly stated in the citations—the citation only says 'diverse array of modal data.' (2) The phrase 'innovative multimodal models being developed' is not directly supported by the provided citations. (3) The claim about 'counterfactual robustness' appears to be present in the citations but the citation text provided is incomplete/garbled ('ntegration, and counterfactual robustness'). The main points about challenges and future directions are generally well-supported, but the additions about specific modalities and model development go slightly beyond what the citations explicitly state.",
+      "keyword_coverage": 1.0,
+      "source_hit": true,
+      "section_hit": true,
+      "input_tokens": 3874,
+      "output_tokens": 1328,
+      "latency_sec": 7.99
+    },
+    {
+      "id": 10,
+      "question": "What quality scores and required abilities are used to evaluate RAG models?",
+      "answer": "According to the context, contemporary evaluation practices of RAG models emphasize three primary quality scores and four essential abilities that collectively inform the evaluation of the two principal targets of the RAG model: retrieval and generation. However, the specific names of these three quality scores and four essential abilities are not explicitly detailed in the provided chunks. The context mentions that metrics such as Hit Rate, MRR, NDCG, BLEU, ROUGE, Accuracy, EM, and Recall are used for various evaluation aspects including context relevance, faithfulness, answer relevance, noise robustness, negative rejection, information integration, and counterfactual robustness.",
+      "sources": [
+        {
+          "source": "rag_survey_2312",
+          "section": "Evaluation Aspects",
+          "chunk_id": "rag_survey_2312__struct__0036_00"
+        }
+      ],
+      "citations": [
+        {
+          "chunk_id": "rag_survey_2312__struct__0036_00",
+          "quote": "Contemporary evaluation practices of RAG models emphasize three primary quality scores and four essential abilities, which collectively inform the evaluation of the two principal targets of the RAG model: retrieval and generation."
+        }
+      ],
+      "idk": false,
+      "idk_reason": null,
+      "n_retrieved": 10,
+      "n_kept": 5,
+      "has_sources": true,
+      "has_citations": true,
+      "citations_grounded": 1.0,
+      "answer_matches_citations": true,
+      "faithfulness_score": 8,
+      "faithfulness_reason": "The answer is mostly faithful to the citation. It correctly states that contemporary evaluation practices emphasize three primary quality scores and four essential abilities that inform evaluation of retrieval and generation. The answer accurately notes that specific names aren't detailed in the chunks. However, the answer goes beyond the single provided citation by adding information about specific metrics (Hit Rate, MRR, NDCG, etc.) and evaluation aspects that aren't present in the citation provided, which slightly stretches faithfulness.",
+      "keyword_coverage": 0.5,
+      "source_hit": true,
+      "section_hit": true,
+      "input_tokens": 2593,
+      "output_tokens": 332,
+      "latency_sec": 3.38
+    }
+  ],
+  "off_topic": [
+    {
+      "question": "What is the capital of France?",
+      "idk": true,
+      "idk_reason": "below_threshold",
+      "n_kept": 0,
+      "has_sources": false,
+      "has_citations": false,
+      "answer": "I don't know based on the provided documents. The retrieved context is not relevant enough to answer this question reliably. Could you please clarify or rephrase your question?"
+    },
+    {
+      "question": "How do I bake a chocolate cake?",
+      "idk": true,
+      "idk_reason": "below_threshold",
+      "n_kept": 0,
+      "has_sources": false,
+      "has_citations": false,
+      "answer": "I don't know based on the provided documents. The retrieved context is not relevant enough to answer this question reliably. Could you please clarify or rephrase your question?"
+    },
+    {
+      "question": "Who won the 2018 FIFA World Cup?",
+      "idk": true,
+      "idk_reason": "below_threshold",
+      "n_kept": 0,
+      "has_sources": false,
+      "has_citations": false,
+      "answer": "I don't know based on the provided documents. The retrieved context is not relevant enough to answer this question reliably. Could you please clarify or rephrase your question?"
+    }
+  ]
+}
