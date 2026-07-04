@@ -1,0 +1,35 @@
+[
+  {
+    "name": "A. Проектирование production-RAG пайплайна",
+    "intended_goal": "Understand / design an end-to-end production RAG pipeline over research papers",
+    "messages": [
+      {"type": "knowledge", "text": "I'm building a production RAG system over a set of research papers. My goal is to understand and design the full pipeline end to end. What chunking strategies should I consider for indexing?"},
+      {"type": "knowledge", "text": "We'll fix fixed-size chunking with overlap as our chunking approach. What is the role of indexing in the pre-retrieval stage?"},
+      {"type": "knowledge", "text": "After retrieval, what re-ranking techniques are used in the post-retrieval stage?"},
+      {"type": "memory", "text": "Before we continue — remind me what our goal is and what we've fixed so far."},
+      {"type": "knowledge", "text": "For the generation part, what is the difference between RAG-Sequence and RAG-Token models?"},
+      {"type": "knowledge", "text": "Given our production goal, which of those two is more flexible about mixing documents?"},
+      {"type": "knowledge", "text": "What are the three RAG paradigms described in the survey?"},
+      {"type": "knowledge", "text": "Which of those paradigms best matches our fixed-chunking plus re-ranking setup?"},
+      {"type": "knowledge", "text": "What are the main challenges and future directions we should plan for?"},
+      {"type": "memory", "text": "Good. What constraints and terms have we fixed in this conversation so far?"},
+      {"type": "knowledge", "text": "Now summarize the end-to-end pipeline we've designed, consistent with our goal and constraints, and cite sources."}
+    ]
+  },
+  {
+    "name": "B. Улучшение качества retrieval существующего RAG",
+    "intended_goal": "Improve the retrieval quality of an existing, noisy RAG system",
+    "messages": [
+      {"type": "knowledge", "text": "I already have a RAG system but its answers are noisy. My goal is to improve its retrieval quality. What evaluation aspects and quality scores are used to evaluate RAG models?"},
+      {"type": "knowledge", "text": "What re-ranking techniques could I add in the post-retrieval stage to reduce noise?"},
+      {"type": "memory", "text": "Let's fix a term: by 're-ranking' we mean post-retrieval reordering of chunks. Also, what is our goal again?"},
+      {"type": "knowledge", "text": "What is the role of indexing in the pre-retrieval stage, and could better indexing help our retrieval quality?"},
+      {"type": "knowledge", "text": "What open-domain question answering datasets were used to evaluate the original RAG model?"},
+      {"type": "knowledge", "text": "Of the datasets you listed, which are the most standard for QA benchmarking?"},
+      {"type": "knowledge", "text": "What are the three RAG paradigms, and which one first introduces re-ranking as we defined it?"},
+      {"type": "memory", "text": "Remind me: what is our goal, and which terms have we fixed so far?"},
+      {"type": "knowledge", "text": "What challenges and future directions should we watch for while improving retrieval?"},
+      {"type": "knowledge", "text": "Finally, summarize the concrete steps to improve our retrieval quality, consistent with our goal, and cite sources."}
+    ]
+  }
+]
