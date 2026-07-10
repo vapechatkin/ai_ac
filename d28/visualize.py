@@ -1,145 +1,84 @@
-"""d28: визуализация сравнения локальной и облачной RAG."""
+"""d28: визуализация сравнения RAG в консоли."""
 
 import json
 import os
-import textwrap
-
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import numpy as np
 
 DATA_FILE = os.path.join(os.path.dirname(__file__), "results.json")
-OUT_DIR   = os.path.join(os.path.dirname(__file__), "results_plots")
-os.makedirs(OUT_DIR, exist_ok=True)
 
 with open(DATA_FILE, encoding="utf-8") as f:
     results = json.load(f)
 
-questions   = [r["question"] for r in results]
-local_times = [r["local_time"] for r in results]
-cloud_times = [r.get("cloud_time", 0) for r in results]
+LOCAL_COLOR = "\033[94m"   # синий
+CLOUD_COLOR = "\033[93m"   # жёлтый
+BOLD        = "\033[1m"
+RESET       = "\033[0m"
+GREEN       = "\033[92m"
+DIM         = "\033[2m"
 
-short_q = [textwrap.fill(q[:60], 30) for q in questions]
-x = np.arange(len(questions))
-w = 0.35
-
-COLORS = {
-    "local": "#5C85D6",
-    "cloud": "#F4A442",
-    "bg":    "#F8F9FA",
-    "text":  "#2C2C2C",
-}
-
-# ── 1. Скорость ─────────────────────────────────────────────────────────────
-fig, ax = plt.subplots(figsize=(11, 5))
-fig.patch.set_facecolor(COLORS["bg"])
-ax.set_facecolor(COLORS["bg"])
-
-bars_l = ax.bar(x - w/2, local_times, w, label=f"Local qwen2.5:3b  (avg {np.mean(local_times):.1f}s)",
-                color=COLORS["local"], zorder=3)
-bars_c = ax.bar(x + w/2, cloud_times, w, label=f"Cloud claude-haiku  (avg {np.mean(cloud_times):.1f}s)",
-                color=COLORS["cloud"], zorder=3)
-
-for bar in list(bars_l) + list(bars_c):
-    h = bar.get_height()
-    ax.text(bar.get_x() + bar.get_width()/2, h + 0.15, f"{h:.1f}s",
-            ha="center", va="bottom", fontsize=8, color=COLORS["text"])
-
-ax.set_xticks(x)
-ax.set_xticklabels(short_q, fontsize=8)
-ax.set_ylabel("Время ответа (сек)", color=COLORS["text"])
-ax.set_title("Скорость: локальная vs облачная модель", fontsize=13, color=COLORS["text"], pad=12)
-ax.legend(fontsize=9)
-ax.grid(axis="y", alpha=0.3, zorder=0)
-ax.spines[["top", "right"]].set_visible(False)
-
-plt.tight_layout()
-plt.savefig(os.path.join(OUT_DIR, "speed.png"), dpi=150)
-plt.close()
-print("saved: speed.png")
+BAR_WIDTH = 40
 
 
-# ── 2. Длина ответа ──────────────────────────────────────────────────────────
-local_lens = [len(r["answer_local"]) for r in results]
-cloud_lens = [len(r.get("answer_cloud", "")) for r in results]
-
-fig, ax = plt.subplots(figsize=(11, 5))
-fig.patch.set_facecolor(COLORS["bg"])
-ax.set_facecolor(COLORS["bg"])
-
-bars_l = ax.bar(x - w/2, local_lens, w, label="Local", color=COLORS["local"], zorder=3)
-bars_c = ax.bar(x + w/2, cloud_lens, w, label="Cloud", color=COLORS["cloud"], zorder=3)
-
-ax.set_xticks(x)
-ax.set_xticklabels(short_q, fontsize=8)
-ax.set_ylabel("Длина ответа (символов)", color=COLORS["text"])
-ax.set_title("Длина ответа: локальная vs облачная", fontsize=13, color=COLORS["text"], pad=12)
-ax.legend(fontsize=9)
-ax.grid(axis="y", alpha=0.3, zorder=0)
-ax.spines[["top", "right"]].set_visible(False)
-
-plt.tight_layout()
-plt.savefig(os.path.join(OUT_DIR, "length.png"), dpi=150)
-plt.close()
-print("saved: length.png")
+def bar(value: float, max_val: float, color: str) -> str:
+    filled = int(value / max_val * BAR_WIDTH)
+    return color + "█" * filled + DIM + "░" * (BAR_WIDTH - filled) + RESET
 
 
-# ── 3. Сводная таблица ───────────────────────────────────────────────────────
-fig = plt.figure(figsize=(13, 4.5))
-fig.patch.set_facecolor(COLORS["bg"])
+def short(text: str, n: int = 45) -> str:
+    return text[:n] + "…" if len(text) > n else text
 
-ax = fig.add_subplot(111)
-ax.axis("off")
 
-col_labels = ["Вопрос", "Local (s)", "Cloud (s)", "Быстрее", "Local len", "Cloud len"]
-rows = []
+max_time = max(max(r["local_time"], r.get("cloud_time", 0)) for r in results)
+max_len  = max(max(len(r["answer_local"]), len(r.get("answer_cloud", ""))) for r in results)
+
+# ── Скорость ─────────────────────────────────────────────────────────────────
+print(f"\n{BOLD}{'═'*70}{RESET}")
+print(f"{BOLD}  СКОРОСТЬ ОТВЕТА (секунды){RESET}")
+print(f"{'═'*70}{RESET}")
+
 for r in results:
-    faster = "🏠 Local" if r["local_time"] < r.get("cloud_time", 9999) else "☁️  Cloud"
-    rows.append([
-        textwrap.fill(r["question"][:55], 40),
-        f"{r['local_time']:.1f}",
-        f"{r.get('cloud_time', '—'):.1f}" if r.get("cloud_time") else "—",
-        faster,
-        str(len(r["answer_local"])),
-        str(len(r.get("answer_cloud", ""))),
-    ])
+    q = short(r["question"])
+    lt = r["local_time"]
+    ct = r.get("cloud_time", 0)
+    print(f"\n  {DIM}{q}{RESET}")
+    print(f"  Local  {bar(lt, max_time, LOCAL_COLOR)} {LOCAL_COLOR}{lt:.1f}s{RESET}")
+    print(f"  Cloud  {bar(ct, max_time, CLOUD_COLOR)} {CLOUD_COLOR}{ct:.1f}s{RESET}")
 
-# Итоговая строка
-rows.append([
-    "СРЕДНЕЕ",
-    f"{np.mean(local_times):.1f}",
-    f"{np.mean(cloud_times):.1f}",
-    f"Cloud ×{np.mean(local_times)/np.mean(cloud_times):.1f} быстрее",
-    f"{int(np.mean(local_lens))}",
-    f"{int(np.mean(cloud_lens))}",
-])
+avg_l = sum(r["local_time"] for r in results) / len(results)
+avg_c = sum(r.get("cloud_time", 0) for r in results) / len(results)
+print(f"\n  {BOLD}Среднее:  Local {avg_l:.1f}s   Cloud {avg_c:.1f}s   "
+      f"({GREEN}Cloud ×{avg_l/avg_c:.1f} быстрее{RESET}{BOLD}){RESET}")
 
-table = ax.table(cellText=rows, colLabels=col_labels,
-                 loc="center", cellLoc="center")
-table.auto_set_font_size(False)
-table.set_fontsize(8.5)
-table.scale(1, 2.0)
+# ── Длина ответа ─────────────────────────────────────────────────────────────
+print(f"\n{BOLD}{'═'*70}{RESET}")
+print(f"{BOLD}  ДЛИНА ОТВЕТА (символов){RESET}")
+print(f"{'═'*70}{RESET}")
 
-# Стили
-for (row, col), cell in table.get_celld().items():
-    cell.set_edgecolor("#D0D0D0")
-    if row == 0:
-        cell.set_facecolor("#3A3A5C")
-        cell.set_text_props(color="white", fontweight="bold")
-    elif row == len(rows):
-        cell.set_facecolor("#E8EAF6")
-        cell.set_text_props(fontweight="bold")
-    elif row % 2 == 0:
-        cell.set_facecolor("#FFFFFF")
-    else:
-        cell.set_facecolor(COLORS["bg"])
+for r in results:
+    q = short(r["question"])
+    ll = len(r["answer_local"])
+    cl = len(r.get("answer_cloud", ""))
+    print(f"\n  {DIM}{q}{RESET}")
+    print(f"  Local  {bar(ll, max_len, LOCAL_COLOR)} {LOCAL_COLOR}{ll}{RESET}")
+    print(f"  Cloud  {bar(cl, max_len, CLOUD_COLOR)} {CLOUD_COLOR}{cl}{RESET}")
 
-ax.set_title("Итоговое сравнение RAG: локальная vs облачная", fontsize=13,
-             color=COLORS["text"], pad=16)
+avg_ll = sum(len(r["answer_local"]) for r in results) / len(results)
+avg_cl = sum(len(r.get("answer_cloud", "")) for r in results) / len(results)
+print(f"\n  {BOLD}Среднее:  Local {int(avg_ll)} симв.   Cloud {int(avg_cl)} симв.{RESET}")
 
-plt.tight_layout()
-plt.savefig(os.path.join(OUT_DIR, "summary.png"), dpi=150, bbox_inches="tight")
-plt.close()
-print("saved: summary.png")
+# ── Итоговая таблица ─────────────────────────────────────────────────────────
+print(f"\n{BOLD}{'═'*70}{RESET}")
+print(f"{BOLD}  ИТОГО{RESET}")
+print(f"{'═'*70}")
+print(f"  {'Вопрос':<46} {'Local':>6} {'Cloud':>6}  Быстрее")
+print(f"  {'─'*46} {'─'*6} {'─'*6}  {'─'*7}")
 
-print(f"\nВсе графики → {OUT_DIR}/")
+for r in results:
+    q  = short(r["question"], 46)
+    lt = r["local_time"]
+    ct = r.get("cloud_time", 0)
+    winner = f"{GREEN}Cloud{RESET}" if ct < lt else f"{LOCAL_COLOR}Local{RESET}"
+    print(f"  {q:<46} {LOCAL_COLOR}{lt:>5.1f}s{RESET} {CLOUD_COLOR}{ct:>5.1f}s{RESET}  {winner}")
+
+print(f"\n  {BOLD}{'СРЕДНЕЕ':<46} {avg_l:>5.1f}s {avg_c:>6.1f}s  "
+      f"{GREEN}Cloud ×{avg_l/avg_c:.1f}{RESET}{BOLD}{RESET}")
+print(f"{'═'*70}\n")
