@@ -5,7 +5,7 @@ struct APIError: Error, LocalizedError {
     var errorDescription: String? { message }
 }
 
-class AnthropicClient {
+class AnthropicClient: LLMClient {
     let apiKey: String
     let model  = "claude-haiku-4-5-20251001"
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!

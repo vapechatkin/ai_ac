@@ -13,18 +13,16 @@ class Orchestrator: ObservableObject {
     let workingMemory:  WorkingMemoryService
     let longTermMemory: LongTermMemoryService
     let invariantMemory: InvariantMemoryService
-    var client: AnthropicClient?
+    var client: (any LLMClient)?
 
     init(context: ModelContext) {
         workingMemory   = WorkingMemoryService(context: context)
         longTermMemory  = LongTermMemoryService(context: context)
         invariantMemory = InvariantMemoryService(context: context)
 
-        if let key = KeyStorage.load() {
-            client = AnthropicClient(apiKey: key)
-        }
+        client = OllamaClient(model: OllamaModelStorage.load())
 
-        isSetupDone = hasApiKey() && hasProfile()
+        isSetupDone = hasProfile()
         refresh()
 
         if let t = currentTask, !t.pendingResult.isEmpty {
@@ -32,8 +30,12 @@ class Orchestrator: ObservableObject {
         }
     }
 
-    func hasApiKey() -> Bool { KeyStorage.load() != nil }
     func hasProfile() -> Bool { longTermMemory.isComplete() }
+
+    func setOllama(model: String) {
+        OllamaModelStorage.save(model)
+        client = OllamaClient(model: model)
+    }
 
     var stateHint: String {
         guard let task = currentTask else {
@@ -59,10 +61,6 @@ class Orchestrator: ObservableObject {
         }
     }
 
-    func setApiKey(_ key: String) {
-        KeyStorage.save(key)
-        client = AnthropicClient(apiKey: key)
-    }
 
     func refresh() {
         let wf = workingMemory.load()
@@ -94,7 +92,7 @@ class Orchestrator: ObservableObject {
     }
 
     private func handleAwaitingConfirmChat(_ text: String, task: AgentTask) async {
-        guard let c = client else { addMsg(.assistant, "API ключ не задан."); return }
+        guard let c = client else { addMsg(.assistant, "LLM не настроена."); return }
         isLoading = true; defer { isLoading = false }
 
         let transitions: String
@@ -204,7 +202,7 @@ class Orchestrator: ObservableObject {
     // MARK: - Agents
 
     private func runPlanningAgent(_ task: AgentTask, _ profile: String, _ prefs: String, _ invBlock: String, feedback: String = "") async {
-        guard let c = client else { addMsg(.assistant, "API ключ не задан."); return }
+        guard let c = client else { addMsg(.assistant, "LLM не настроена."); return }
         isLoading = true; defer { isLoading = false }
 
         let system = buildSystem(invBlock, profile, prefs, """
@@ -243,7 +241,7 @@ class Orchestrator: ObservableObject {
     }
 
     private func runExecutionAgent(_ task: AgentTask, _ profile: String, _ prefs: String, _ invBlock: String, feedback: String = "") async {
-        guard let c = client else { addMsg(.assistant, "API ключ не задан."); return }
+        guard let c = client else { addMsg(.assistant, "LLM не настроена."); return }
         isLoading = true; defer { isLoading = false }
 
         let system = buildSystem(invBlock, profile, prefs, """
@@ -284,7 +282,7 @@ class Orchestrator: ObservableObject {
     }
 
     private func runValidationAgent(_ task: AgentTask, _ profile: String, _ prefs: String, _ invBlock: String, feedback: String = "") async {
-        guard let c = client else { addMsg(.assistant, "API ключ не задан."); return }
+        guard let c = client else { addMsg(.assistant, "LLM не настроена."); return }
         isLoading = true; defer { isLoading = false }
 
         let system = buildSystem(invBlock, profile, prefs, """
@@ -328,7 +326,7 @@ class Orchestrator: ObservableObject {
     // MARK: - Agent loop
 
     private func runLoop(
-        _ client: AnthropicClient,
+        _ client: any LLMClient,
         _ system: String,
         _ history: inout [[String: Any]],
         _ tools: [[String: Any]],

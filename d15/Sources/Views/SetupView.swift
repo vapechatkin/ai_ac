@@ -21,6 +21,9 @@ struct OnboardingStep: View {
     @EnvironmentObject var orchestrator: Orchestrator
     let onComplete: () -> Void
 
+    // Ollama
+    @State private var ollamaModel = OllamaModelStorage.load()
+
     // Profile
     @State private var name       = ""
     @State private var occupation = ""
@@ -37,6 +40,7 @@ struct OnboardingStep: View {
     @State private var selectedCat = invariantCategories[0].key
 
     private var allFilled: Bool {
+        !ollamaModel.trimmingCharacters(in: .whitespaces).isEmpty &&
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&
         !occupation.trimmingCharacters(in: .whitespaces).isEmpty &&
         !grade.trimmingCharacters(in: .whitespaces).isEmpty &&
@@ -47,6 +51,12 @@ struct OnboardingStep: View {
         VStack(alignment: .leading, spacing: 24) {
 
             Text("Настройка агента").font(.largeTitle).bold()
+
+            // ── Ollama ─────────────────────────────────────────────────────
+            SectionHeader("Модель Ollama")
+            LabeledField("Модель", text: $ollamaModel)
+            Text("Убедитесь что Ollama запущена: ollama serve")
+                .font(.caption).foregroundStyle(.secondary)
 
             // ── Профиль ────────────────────────────────────────────────────
             SectionHeader("Профиль")
@@ -126,6 +136,8 @@ struct OnboardingStep: View {
     }
 
     private func save() {
+        orchestrator.setOllama(model: ollamaModel.trimmingCharacters(in: .whitespaces))
+
         let ltm = orchestrator.longTermMemory
         ltm.setField("name",       value: name)
         ltm.setField("occupation", value: occupation)
