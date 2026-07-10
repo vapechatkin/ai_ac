@@ -1,198 +1,88 @@
-[
-  {
-    "label": "baseline",
-    "model": "qwen2.5:3b",
-    "temperature": 0.7,
-    "max_tokens": 512,
-    "avg_time": 15.89,
-    "avg_len": 1915,
+{
+  "before": {
+    "config": "before",
+    "label": "До оптимизации",
+    "params": {
+      "label": "До оптимизации",
+      "temperature": 0.7,
+      "max_tokens": 512,
+      "num_ctx": 2048
+    },
     "results": [
       {
-        "answer": "RAG (Retrieval-Augmented Generation) is an approach used in natural language processing where the system uses both retriever (a model or mechanism that retrieves information from a dataset) and generative components to generate responses. The terms \"RAG-Sequence\" and \"RAG-Token\" refer to different approaches within this framework, but they use similar underlying concepts of retrieval and generation.\n\n### RAG-Token\nIn the context of RAG, \"RAG-Token\" refers to an approach where tokens (sub-units in a text sequence) are used as the basic unit for both search and generation. The tokens can be words or sub-word units like sub-tokens (e.g., BPE/BERT style tokenization). In this model, information retrieval is done at the token level, meaning that each token is represented by its embedding, and these embeddings are then fed into a generative model to generate responses.\n\n### RAG-Sequence\nRAG-Sequence also uses tokens as the basic unit for search and generation but employs sequence-based models (such as transformers) for both retrieval and generation. In this approach, sequences of tokens are treated as inputs by the generative model, which helps in capturing longer dependencies within the text. The retrieval step might involve encoding each token and then using these encoded representations to retrieve relevant information.\n\n### Key Differences:\n1. **Representation Level**:\n   - **RAG-Token**: Tokens are represented individually and fed into a generative model directly.\n   - **RAG-Sequence**: Sequences of tokens (or subsequences) are used as inputs for the generative model, capturing dependencies between tokens.\n\n2. **Relevance Matching**:\n   - **RAG-Token**: Relevance matching is done at the token level, meaning that each token needs to be compared against a set of retrieved documents.\n   - **RAG-Sequence**: Relevance matching can leverage context and larger subsequence information provided by sequences of tokens.\n\n3. **Efficiency and Flexibility**:\n   - **RAG-Token**: Can be more efficient for smaller models since it only uses token-level embeddings.\n   - **RAG-Sequence**: More flexible but might require larger models or additional mechanisms to capture sequence-level context effectively.\n\nBoth approaches aim at improving the quality of responses by integrating retrieval into the generation process, and they can be used in different scenarios depending on the specific requirements and constraints.",
-        "time": 21.76,
-        "len": 2435,
-        "question": "What is the difference between RAG-Sequence and RAG-Token?"
+        "query": "хочу детектив с неожиданной развязкой",
+        "answer": "Конечно, я могу помочь вам составить идею для такого детектива!\n\nПредставьте себе следующую ситуацию:\n\nНазвание: \"Многослойная Жила\"\n\nСюжет:\nАгент ФБР Эдвар Уэсли получил новый запрос на расследование - таинственное исчезновение миллионера Джеймса Харпстона. Все звенья связаны вместе: убийство, взрыв и последующая молчаливая смерть.\n\nГлавные подозреваемые:\n1. Жена Харпстона - Сара, которая вела активную борьбу за наследие своего мужа.\n2. Его сын Максимус, который уехал из-под его контроля после последнего исчезновения брата.\n3. Один из менеджеров Харпстона - Билл, который недавно продал свои акции компании и исчез в тот же день.\n\nВ процессе расследования Эдвара Уэсли становится очевидным, что это не просто обычный криминальный сюжет. Вместо того чтобы решить все вопросы быстро, он вынужден распутывать сложные сети подозреваемых и обнаруживать многослойную схему, где каждое звено сводится к новому.\n\nКлючевой момент: в один прекрасный день Эдвар Уэсли обнаруживает запись видеонаблюдения, на которой видно, как Сара, Максимус и Билл вместе убегают из офиса компании Харпстона в тот самый день его исчезновения. \n\nИз этого момента начинается невероятный ход событий: Эдвар Уэсли узнает о том, что Сара втайне работает с Максимусом и Биллом на криминальных разведках за счет части своего наследства.\n\nВсе звенья приходят вместе, создавая неожиданную развязку: Эдвар Уэсли использует эту информацию, чтобы спровоцировать возможные убийства для того, чтобы доказать свою правоту и",
+        "time": 25.81,
+        "length": 1488,
+        "format": 1
       },
       {
-        "answer": "Vector embeddings, also known as word embeddings or numerical representations, are high-dimensional vectors that aim to represent textual data such that similar words are mapped close to each other in the embedding space while dissimilar words remain far apart. These embeddings capture semantic and syntactic information from text through machine learning techniques applied on large datasets of text. They enable various natural language processing (NLP) tasks, including sentiment analysis, text classification, and information retrieval, by reducing dimensionality and allowing computers to perform operations like distance calculations between texts more efficiently than working directly with raw text data.",
-        "time": 5.21,
-        "len": 713,
-        "question": "Explain vector embeddings in one paragraph."
+        "query": "что-нибудь про путешествия и самопознание",
+        "answer": "Путешествия часто включают в себя самопознание, ведь при этом человек сталкивается с новыми культурами, языками, традициями и жизнями людей. Вот некоторые примеры:\n\n1) Встреча с самим собой: путешествуя, вы можете увидеть, как ваше поведение в разных обстоятельствах отличается от того, как вы себя ведете дома.\n\n2) Самообразование: путешествие - это великолепный способ узнать о других культурах, гастрономии и традициях. Это помогает расширить ваше понимание мира.\n\n3) Здоровье и экология: приходящие в путешествиях изменения в окружающей среде могут помочь вам осознать влияние своего образа жизни на неё.\n\n4) Самопринятие: когда вы обнаруживаете, что вы можете справиться с новыми вызовами или умением, вам становится проще распознавать свои возможности в других сферах жизни. \n\n5) Социальное самопознание: путешествуя, вы сталкиваетесь с различными формами социального взаимодействия и находитесь на различных уровнях власти.\n\nВ общем, путешествие - это прекрасный способ расширить свое понимание мира, себя и всего вокруг вас.",
+        "time": 14.11,
+        "length": 1032,
+        "format": 0
       },
       {
-        "answer": "FAISS (Facebook AI Search) is an open-source library designed to accelerate nearest neighbor search and information retrieval tasks, especially those involving high-dimensional vectors. It supports efficient similarity searches in large-scale datasets.\n\n### Key Features of FAISS:\n\n1. **Supports Multiple Distance Metrics**: FAISS can efficiently compute different distance metrics such as Euclidean distance, cosine similarity, etc., which is crucial for vector space models used in many NLP and computer vision tasks.\n   \n2. **Efficient Indexing Techniques**: It employs various indexing techniques including IVF (Indexed Vector Forest), Multi-Index Quantization, and PQ codes to speed up search operations.\n\n3. **Scalability**: FAISS can handle large datasets by leveraging these efficient indexes and distance metrics, making it suitable for real-world applications involving billions of records.\n\n4. **Flexibility and Integration**: It can be integrated into various machine learning workflows via Python bindings or other programming languages like C++.\n\n### Why is FAISS Used for Similarity Search?\n\nSimilarity search tasks involve finding the closest matches to a query in a large dataset based on some similarity metric (e.g., cosine similarity, Euclidean distance). Here are the key reasons why FAISS is used in such scenarios:\n\n1. **High-Dimensional Vectors**: Many applications, particularly in natural language processing and computer vision, deal with high-dimensional vectors representing objects or entities. These dimensions might represent features like embeddings.\n\n2. **Efficient Indexing**: The indexing techniques provided by FAISS allow it to build an index that can be quickly queried, enabling fast lookups even when dealing with very large datasets.\n\n3. **Flexibility in Distance Metrics**: Being able to handle multiple distance metrics allows for more flexibility depending on the specific use case and data characteristics.\n\n4. **Robustness and Speed**: FAISS includes robust algorithms (like IVF) that improve search speed and accuracy, making it a go-to solution for many similarity search problems where efficiency is critical.\n\n5. **Community Support**: As an open-source project maintained by Facebook AI Research, FAISS benefits from community contributions and regular updates based on user feedback and new research findings.\n\nIn summary, FAISS provides powerful tools to efficiently perform similarity searches in high-dimensional vector spaces, making it a cornerstone for many modern machine learning applications requiring sophisticated search capabilities.",
-        "time": 20.7,
-        "len": 2598,
-        "question": "What is FAISS and why is it used for similarity search?"
+        "query": "научная фантастика про искусственный интеллект",
+        "answer": "Научно-фантастические произведения, связанные с искусственным интеллектом (ИИ), включают множество интересных тем и сюжетов. Вот несколько примеров:\n\n1. \"2001: Один шаг к звёздам\" Джорджа А. Уолкара - вымышленный ИИ, созданный космическими цивилизациями.\n\n2. \"Робот и Человек\" Агаты Кристи (фильм) - история о сотрудничестве человека и робота.\n\n3. \"Партия\" Антуана Токварта - суперчеловек, созданный ИИ, противостоящий машинному миру.\n\n4. \"Матри Форбс: Робот против человека\" Уильяма Голдинга - авантюрный детективный суперробот против обычного человека.\n\n5. \"Синий квантовый чип\" Криса Муре и Дэниела Хейла - научно-фантастический роман о нейронных сетях, способных взломать Всемирную компьютерную сеть.\n\n6. \"Империя ИИ\" Джорджа Р. Р. Толкина - фантастика о мироздании и его создателе-интеллекте.\n\n7. \"Чужие звезды\" Питера Берга - научно-фантастический роман о космической экспедиции и её противостоянии инопланетной цивилизации, созданной ИИ.\n\nЭто лишь некоторые примеры из обширного мира научной фантастики с элементами искусственного интеллекта. Каждый из этих произведений предлагает уникальные перспективы и решения критических вопросов, связанных с искусственным интеллектом в нашем будущем.",
+        "time": 19.76,
+        "length": 1198,
+        "format": 1
+      },
+      {
+        "query": "классика про войну и человеческую природу",
+        "answer": "Вот несколько классических произведений, связанных с темой войны и человеческой природы:\n\n1. \"Илиада\" Гомер - древнегреческая поэма о борьбе Генрисса и Трои.\n\n2. \"Одиссея\" Гомер - продолжение \"Илиады\", также освещает тему войны и её последствий для людей.\n\n3. Роман Платона \"Гераклит\" - обсуждает вопросы бессмертия души, смерти и природных законов в контексте войны.\n\n4. Фауст (18世纪) Эрnest Hoffmann - образ ФаUSTA олицетворяет человеческую природу, которую нельзя уничтожить даже войной.\n\n5. \"Три товарища\" Федора Достоевского - отражает человеческие инстинкты в условиях войны и ссылки.\n\n6. \"Война и мир\" Льва Толстого - изучает противоречия между национальными интересами и личной свободой, а также тему человеческой природы в ужасающих обстоятельствах войны.\n\n7. \"Мастер и Маргарита\" Булгакова - рассматривает человеческие качества, сохраняющиеся в условиях насилия и войны.\n\nЭти произведения демонстри, как война отражает лучшие и худшие стороны человеческой природы.",
+        "time": 15.87,
+        "length": 973,
+        "format": 1
       }
-    ]
+    ],
+    "avg_time": 18.89,
+    "avg_len": 1172,
+    "avg_fmt": 0.75
   },
-  {
-    "label": "low_temp (0.0)",
-    "model": "qwen2.5:3b",
-    "temperature": 0.0,
-    "max_tokens": 512,
-    "avg_time": 14.43,
-    "avg_len": 1676,
+  "after": {
+    "config": "after",
+    "label": "После оптимизации",
+    "params": {
+      "label": "После оптимизации",
+      "temperature": 0.8,
+      "max_tokens": 400,
+      "num_ctx": 8192
+    },
     "results": [
       {
-        "answer": "RAG (Retrieval-Augmented Generation) can be applied in two main ways: RAG-Sequence and RAG-Token, both of which involve augmenting generation with retrieval mechanisms but differ in how they do so.\n\n### RAG-Sequence:\nIn the context of RAG-Sequence, the sequence refers to the sequence of tokens or words that are generated. This approach involves generating a sequence of tokens directly from the model's output without considering the tokenization boundaries. Essentially, it treats the entire input as one long sequence and uses retrieval mechanisms (like document embeddings) to augment this generation process.\n\n### RAG-Token:\nIn contrast, RAG-Token focuses on the token-level augmentation. Here, the model is trained or fine-tuned in such a way that it considers each individual token when generating text. Retrieval mechanisms are used to retrieve relevant documents at the level of tokens (or subwords), and these retrieved snippets can be incorporated into the generation process by replacing or augmenting specific tokens.\n\n### Key Differences:\n1. **Scope**:\n   - **RAG-Sequence**: Focuses on the entire sequence of generated text.\n   - **RAG-Token**: Focuses on individual tokens within the generated sequence.\n\n2. **Implementation**:\n   - **RAG-Sequence**: The model generates a full sequence and then uses retrieval to find relevant documents that can be used to augment this sequence.\n   - **RAG-Token**: The model is trained or fine-tuned to consider each token individually, allowing it to use retrieval mechanisms at the level of tokens.\n\n3. **Flexibility**:\n   - **RAG-Sequence**: More flexible in terms of how and where retrieval can be applied within the generated sequence.\n   - **RAG-Token**: More focused on using retrieval at a finer granularity (individual tokens), which might make it more efficient or effective for certain tasks but less so for others.\n\nBoth approaches aim to improve the quality and relevance of text generation by leveraging external knowledge, but they do so in different ways based on whether they focus on sequences or individual tokens.",
-        "time": 18.66,
-        "len": 2086,
-        "question": "What is the difference between RAG-Sequence and RAG-Token?"
+        "query": "хочу детектив с неожиданной развязкой",
+        "answer": "📖 **«Революция ночью»** (Алексей Мордкович)\nЭта книга подойдет для чтения, если вам нравятся загадочные детективы с элементами юмора и неожиданной развязкой. Автор изложит захватывающий увлекательный рассказ о том, как обычные люди могут изменить судьбу мира.\n\nПохожие:\n• **«Ведьма»** (Алексей Мордкович)\n• **«Зима 1953 года»** (Алексей Мордкович)",
+        "time": 9.12,
+        "length": 347,
+        "format": 2
       },
       {
-        "answer": "Vector embeddings, also known as word vectors or numerical representations of textual data, are high-dimensional numeric vectors that aim to capture the semantic and syntactic properties of words within a given text corpus. These embeddings represent each unique term (word or phrase) as a point in an n-dimensional space, where each dimension corresponds to a learned feature or context characteristic. By doing so, vector embeddings allow for the mathematical comparison and similarity measurement between different terms based on their positions in this high-dimensional space, enabling applications such as text classification, information retrieval, and natural language processing tasks.",
-        "time": 5.19,
-        "len": 693,
-        "question": "Explain vector embeddings in one paragraph."
+        "query": "что-нибудь про путешествия и самопознание",
+        "answer": "📖 **\"Путешествие внутрь себя\"** (Марианна Чепмен)\nЭта книга поможет вам глубже познакомиться с собой через путешествие, предлагая методики для саморефлексии и раскрытия истинных желаний.\n\nПохожие:\n• **\"Гид по собственной душе\"** (Дженнифер Джонсон)\n• **\"Внутреннее странствие\"** (Эллен Бернард)\n• **\"Ты не один: путешествие в глубины себя\"** (Стивен Кинг)",
+        "time": 6.66,
+        "length": 355,
+        "format": 3
       },
       {
-        "answer": "FAISS (Facebook AI Search) is an open-source library designed to efficiently store, index, and search large datasets of vectors in high-dimensional spaces. It is particularly well-suited for applications that require fast similarity searches, such as image or text retrieval.\n\n### Key Features of FAISS:\n\n1. **Efficient Indexing**: FAISS provides various indexing strategies (e.g., IVFFlat, PQ) to efficiently store and search through large datasets.\n2. **Scalability**: It can handle very large datasets with millions or even billions of vectors.\n3. **Flexibility**: Supports a wide range of vector embeddings from different models like Word2Vec, BERT, etc.\n\n### Why is FAISS Used for Similarity Search?\n\n1. **High-Dimensional Vectors**: Many applications generate high-dimensional feature vectors (e.g., word embeddings in NLP or image features in computer vision). FAISS can handle these complex and large datasets effectively.\n   \n2. **Efficient Indexing**: FAISS uses advanced indexing techniques to speed up the search process, making it suitable for real-time applications where quick responses are crucial.\n\n3. **Versatility**: It supports multiple vector formats (e.g., dense vectors, sparse vectors) and can be integrated with various machine learning frameworks like TensorFlow and PyTorch.\n\n4. **Scalability**: FAISS is designed to scale well with the size of the dataset, making it suitable for both small-scale and large-scale applications.\n\n5. **Customizable Search Strategies**: Users can choose from different search strategies (e.g., KNN) based on their specific needs, ensuring optimal performance in terms of speed and accuracy.\n\n### Example Use Case:\n\nIn a recommendation system, you might have millions of products each with its own high-dimensional feature vector representing aspects like price, category, user ratings, etc. FAISS can be used to efficiently store these vectors and quickly find the most similar products when a user queries for recommendations based on their preferences or past behavior.\n\n### Conclusion:\n\nFAISS is an essential tool in the toolkit of data scientists and engineers working with high-dimensional vector data, providing them with powerful indexing capabilities and efficient search mechanisms.",
-        "time": 19.43,
-        "len": 2249,
-        "question": "What is FAISS and why is it used for similarity search?"
+        "query": "научная фантастика про искусственный интеллект",
+        "answer": "📖 **Властелин Ктулху** (Хорас А.Р.)\nЭта книга известна своими глубокими и мистическими идеями, которые могут быть использованы для размышлений о будущем и создании искусственного интеллекта в фантастической среде.\n\nПохожие:\n• **Понятие как вещь** (Маркс)\n• **Искусственный интеллект: история, техника и перспективы** (Форбс)\n• **Искусственный интеллект и будущее** (Разумовский)",
+        "time": 7.7,
+        "length": 378,
+        "format": 3
+      },
+      {
+        "query": "классика про войну и человеческую природу",
+        "answer": "📖 **\"Колобок\"** (Русский сказочник)\nЭта книга пронизана глубиной человеческой природы, отражающей разные стороны характера героев: смелых, трусливых, решительных и хитрых. Также она является прекрасным примером как войны между людьми может возникать из самых незначительных событий.\n\nПохожие:\n• **\"Сказки о царе Салтане\"** (Лев Толстой)\n• **\"Русские народные сказки\"** (Русский сказочник)\n• **\"Медный вещун\"** (Михаил Лермонтов)",
+        "time": 7.9,
+        "length": 428,
+        "format": 3
       }
-    ]
-  },
-  {
-    "label": "high_temp (1.0)",
-    "model": "qwen2.5:3b",
-    "temperature": 1.0,
-    "max_tokens": 512,
-    "avg_time": 13.61,
-    "avg_len": 1620,
-    "results": [
-      {
-        "answer": "RAG (Retrieval-Augmented Generation) can be applied to both sequences and tokens, but \"RAG-Sequence\" and \"RAG-Token\" refer to different ways of applying retrieval-augmented generation in these contexts.\n\n1. **RAG-Sequence**: In this context, the entire input or output sequence is treated as a whole for RAG augmentation. For example, when processing natural language inputs or outputs like text summaries or dialogues, each full sequence could be augmented using a knowledge base that retrieves relevant information to enhance the quality of the generated response.\n\n2. **RAG-Token**: Here, retrieval-augmented generation focuses on individual tokens within sequences (e.g., words) rather than the whole sequence itself. This approach treats language models and their inputs/outputs as sequences composed of tokens (word pieces or subwords). RAG can then enhance these token-level outputs by retrieving relevant contextual information from a knowledge base to refine them.\n\nIn summary, while both concepts use retrieval-augmented generation principles, they differ in the granularity at which they apply this augmentation:\n- **RAG-Sequence** works with full sequences.\n- **RAG-Token** works with tokens within those sequences.",
-        "time": 10.86,
-        "len": 1227,
-        "question": "What is the difference between RAG-Sequence and RAG-Token?"
-      },
-      {
-        "answer": "Vector embeddings, also known as word embeddings or numerical representations of textual data, are high-dimensional vectors that aim to capture the semantic and syntactic information associated with words or phrases within a text corpus. These embeddings represent each unique term (or combination of terms) as a point in an N-dimensional space where dimensions correspond to different features learned by the model, such as word frequency, co-occurrence patterns, and proximity in sentence structure. Vector embeddings enable machines to understand the context and meaning behind words by quantifying these semantic nuances using numerical values that reflect relationships between entities like synonyms, antonyms, or related concepts. This approach facilitates various natural language processing tasks, including text classification, sentiment analysis, and machine translation, by leveraging the geometric properties of vector spaces for similarity-based computations.",
-        "time": 7.07,
-        "len": 973,
-        "question": "Explain vector embeddings in one paragraph."
-      },
-      {
-        "answer": "FAISS (Fast.ai In Search) is an open-source library designed to efficiently support similarity search on massive datasets, such as in recommendation systems or clustering applications. It provides tools for building approximate nearest neighbor (ANN) indexes, which are particularly useful when dealing with large volumes of data where exact matching would be too computationally expensive.\n\n### Key Features of FAISS:\n\n1. **Indexing Algorithms**: \n   - **IVF+HQ** and **PQ**:\n     These algorithms use hybrid indexing methods: \n     - **IVF (Indexed Vectors Forest)** partitions the dataset into multiple clusters or buckets, followed by a quantization step that reduces the dimensions of vectors to speed up searching.\n     - **PQ (Product Quantization)** replaces each vector with its encoded representation. This encoding is often much lower-dimensional, making it faster and more memory-efficient for searches.\n\n2. **Index Construction**:\n   - FAISS supports various indexing methods including those based on KD-trees, which are used in the construction of a search index from the dataset.\n\n3. **Vector Similarity Measures**: \n   - Supports cosine similarity (the default) as well as other similarity measures like dot product and L2 distance.\n   \n4. **Scalability**:\n   - Designed to work with extremely large datasets, supporting multi-threading for better performance.\n\n### Why Use FAISS for Similarity Search?\n\n1. **Efficiency**: \n   - For massive datasets, exact nearest neighbor search can be computationally intensive. FAISS’s hybrid and quantized vector indexing methods make it possible to perform fast approximate nearest neighbors searches in large data spaces.\n   \n2. **Scalability**:\n   - It is designed to scale well with the size of your dataset, making it suitable for applications that require handling very large datasets.\n\n3. **Flexibility**: \n   - FAISS supports a wide range of indexing and similarity measures, allowing flexibility depending on specific requirements of an application.\n   \n4. **Community and Ecosystem**:\n   - Being part of a larger ecosystem, developers can easily integrate it into existing projects or applications that use other components from Fast.ai.\n\n5. **Performance**: \n   - It provides good performance out-of-the-box without the need to implement complex search algorithms manually, allowing researchers and practitioners alike to focus on application-specific tasks rather than implementation details.\n\nIn summary, FAISS is used for similarity search due to its efficiency in handling large datasets with approximate nearest neighbor searches, combined with its scalability and flexibility. It is well-su",
-        "time": 22.91,
-        "len": 2661,
-        "question": "What is FAISS and why is it used for similarity search?"
-      }
-    ]
-  },
-  {
-    "label": "short_output (128tok)",
-    "model": "qwen2.5:3b",
-    "temperature": 0.7,
-    "max_tokens": 128,
-    "avg_time": 5.92,
-    "avg_len": 716,
-    "results": [
-      {
-        "answer": "RAG stands for Retrieval-Augmented Generation, which is an approach used in natural language processing to enhance generative models by incorporating information from a knowledge base or retrieval system.\n\n**RAG-Sequence** refers to using sequence-based retrieval methods. In this context, the \"sequence\" could be sentences, paragraphs, or even full documents. The model retrieves and processes sequences that are relevant to the user's input (query) before generating an answer. This approach often involves tokenization of text into sequences for searching and retrieving.\n\n**RAG-Token**, on the other hand, is a more abstract concept related to how tokens (which are sequences",
-        "time": 6.31,
-        "len": 679,
-        "question": "What is the difference between RAG-Sequence and RAG-Token?"
-      },
-      {
-        "answer": "Vector embeddings, also known as word embeddings or feature vectors, represent textual information as high-dimensional vectors where each dimension corresponds to a specific property of the text (like length, frequency of words, etc.). These vectors capture semantic and syntactic relationships between words based on their context within documents or sentences. Through techniques such as neural networks, particularly word2vec and GloVe, these embeddings learn from large text corpora to encode abstract meanings into numeric formats that can be used for various natural language processing tasks like classification, clustering, and recommendation systems, enabling machines to understand the meaning of words similarly to how humans do.",
-        "time": 5.64,
-        "len": 740,
-        "question": "Explain vector embeddings in one paragraph."
-      },
-      {
-        "answer": "FAISS (Factorized Attention Information Retrieval System) is an open-source library designed to accelerate the similarity search with large-scale pre-trained deep learning models. It supports several vectorstores, including dense vectors stored in numpy arrays or flat binary files.\n\nFAISS is particularly useful for applications like information retrieval systems, recommendation engines, and content-based image or video search where you need to find similar items based on their embeddings (dense numerical representations) learned by a pre-trained model such as BERT, Sentence Transformers, etc. The key benefits of FAISS are its speed and efficiency in performing similarity searches.\n\nHere's why FAISS is used for similarity",
-        "time": 5.81,
-        "len": 730,
-        "question": "What is FAISS and why is it used for similarity search?"
-      }
-    ]
-  },
-  {
-    "label": "specialist",
-    "model": "qwen2.5:3b",
-    "temperature": 0.7,
-    "max_tokens": 512,
-    "avg_time": 2.86,
-    "avg_len": 355,
-    "results": [
-      {
-        "answer": "RAG-Sequence refers to information retrieval where search terms are used as queries for a sequence model like Transformers to generate answers from a document corpus, while RAG-Token involves using pre-tokenized data directly into a retrieval-Augmented Generation model without constructing sequences. The key difference lies in the preprocessing step: tokens versus sequences.",
-        "time": 3.24,
-        "len": 377,
-        "question": "What is the difference between RAG-Sequence and RAG-Token?"
-      },
-      {
-        "answer": "Vector embeddings represent data points as vectors in a high-dimensional space, where each dimension corresponds to a feature or attribute of the data. These embeddings capture the essential characteristics of items, allowing for efficient comparison and similarity calculations through distance metrics like cosine similarity or Euclidean distance, facilitating tasks such as document classification and recommendation systems.",
-        "time": 3.05,
-        "len": 428,
-        "question": "Explain vector embeddings in one paragraph."
-      },
-      {
-        "answer": "FAISS (Facebook AI Search) is a library designed for efficient similarity searches with large collections of vectors, using algorithms like cosine similarity. It's primarily used for fast approximate nearest neighbor (ANN) searching in high-dimensional spaces.",
-        "time": 2.29,
-        "len": 260,
-        "question": "What is FAISS and why is it used for similarity search?"
-      }
-    ]
-  },
-  {
-    "label": "specialist+low_temp",
-    "model": "qwen2.5:3b",
-    "temperature": 0.0,
-    "max_tokens": 512,
-    "avg_time": 2.18,
-    "avg_len": 294,
-    "results": [
-      {
-        "answer": "RAG-Sequence refers to using sequences of documents or data for retrieval augmentation, while RAG-Token involves treating tokens as units in this process, potentially altering how similarity scores are calculated and used for retrieving relevant information.",
-        "time": 2.1,
-        "len": 258,
-        "question": "What is the difference between RAG-Sequence and RAG-Token?"
-      },
-      {
-        "answer": "Vector embeddings represent data points as vectors in high-dimensional space, where each dimension corresponds to a learned feature or attribute of the input data. These embeddings capture semantic and syntactic information about the represented entities, enabling efficient similarity computations through distance metrics like cosine similarity.",
-        "time": 2.41,
-        "len": 347,
-        "question": "Explain vector embeddings in one paragraph."
-      },
-      {
-        "answer": "FAISS (Facebook Artificial Intelligence Research System) is a library designed for efficient similarity searches with large collections of vectors. It supports various distance metrics and indexing strategies, optimized for speed and scalability in embedding-based applications.",
-        "time": 2.03,
-        "len": 278,
-        "question": "What is FAISS and why is it used for similarity search?"
-      }
-    ]
-  },
-  {
-    "label": "small_model (0.5b)",
-    "model": "qwen2.5:0.5b",
-    "temperature": 0.0,
-    "max_tokens": 512,
-    "avg_time": 3.44,
-    "avg_len": 838,
-    "results": [
-      {
-        "answer": "RAG-Sequence refers to a sequence of tokens that are used as input for a specific task in natural language processing (NLP). These tokens can be either labeled or unlabeled, depending on their purpose. In contrast, RAG-Tokens refer to the actual text data itself, which is typically unlabelled and not part of any training dataset.\n\nRAG-Sequence is more focused on providing input for a specific task, while RAG-Tokens are the raw data that needs to be processed or analyzed in order to perform the task.",
-        "time": 3.81,
-        "len": 504,
-        "question": "What is the difference between RAG-Sequence and RAG-Token?"
-      },
-      {
-        "answer": "Vector embeddings are a type of representation learning technique that converts input data into vectors with numerical values. These vectors can be used for tasks such as natural language processing (NLP), where they represent words or phrases, and image recognition, where they capture features from images. The key advantage of vector embeddings is their ability to handle non-numeric data by mapping it into a format that can be processed by machine learning algorithms.",
-        "time": 1.55,
-        "len": 473,
-        "question": "Explain vector embeddings in one paragraph."
-      },
-      {
-        "answer": "FAISS (Fast Approximate Inverted Index Search) is a library designed to provide fast approximate inverted index searches in large datasets. It aims to improve the performance of traditional inverted indexes by using approximate algorithms, which can be more efficient than exact matching but still offer good accuracy.\n\nFAISS is particularly useful for applications where you need to quickly find similar items or documents within a larger dataset. Its key features include:\n\n1. **Approximate Matching**: Instead of exact matches, FAISS uses approximate matching techniques to find nearby items in the dataset.\n2. **Efficient Indexing**: It efficiently stores and queries the inverted index, making it suitable for large datasets.\n3. **Scalability**: Designed to handle high-dimensional data with millions of records.\n\nFAISS is used for similarity search tasks such as:\n\n- Finding similar documents or items within a larger dataset\n- Ranking results based on their similarity scores\n- Indexing and searching in large text corpora\n\nFAISS is widely adopted in various applications, including:\n\n1. **Text Analytics**: For analyzing and summarizing texts\n2. **Information Retrieval**: For ranking search results\n3. **Data Mining**: For finding similar patterns or entities within data\n4. **Web Search**: For searching web pages based on their content\n\nFAISS is particularly effective for applications where the dataset size is large, but the similarity measure used (e.g., cosine similarity) is not too complex to be implemented efficiently.",
-        "time": 4.96,
-        "len": 1537,
-        "question": "What is FAISS and why is it used for similarity search?"
-      }
-    ]
+    ],
+    "avg_time": 7.84,
+    "avg_len": 377,
+    "avg_fmt": 2.75
   }
-]
+}
