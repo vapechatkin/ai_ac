@@ -5,7 +5,7 @@ import json
 import sys
 import urllib.request
 
-MODEL = "qwen2.5:0.5b"
+MODEL = "qwen2.5:3b"
 URL   = "http://localhost:11434/api/chat"
 
 
