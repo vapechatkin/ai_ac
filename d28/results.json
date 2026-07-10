@@ -1,0 +1,202 @@
+[
+  {
+    "question": "What is the difference between RAG-Sequence and RAG-Token models?",
+    "chunks_found": 5,
+    "answer_local": "Различие между моделями RAG-Sequence и RAG-Token заключается в том, как они обрабатывают retrieved document. В модели RAG-Token для каждого целевого токена из ответа можно \"снять\" (отрывать) разный документ для получения контекста. Это позволяет генератору выбрать содержимое нескольких документов при создании ответа. В то время как модель RAG-Sequence использует один и тот же retrieved document в качестве одной скрытой переменной, которую затем \"мarginalize\" (пространство над) для получения последовательности p(y|x).",
+    "local_time": 6.82,
+    "chunks": [
+      {
+        "score": 0.7861049175262451,
+        "source": "rag_lewis_2020",
+        "section": "2.1 Models",
+        "text": "RAG-Sequence Model\nThe RAG-Sequence model uses the same retrieved document to generate\nthe complete sequence. Technically, it treats the retrieved document as a single latent variable that\nis marginalized to get the seq2seq probability p(y|x) via a top-K approximation. Concretely, the\ntop K documents are retrieved using the retriever, and the generator produces the output sequence\nprobability for each document, which are then marginalized,\npRAG-Sequence(y|x) ≈\nX\nz∈top-k(p(·|x))\npη(z|x)pθ(y|x, z) =\nX\nz∈top-k(p(·|x))\npη(z|x)\nN\nY\ni\npθ(yi|x, z, y1:i−1)\nRAG-Token Model\nIn the RAG-Token model we can draw a different latent document for each\ntarget token and marginalize accordingly. This allows the generator to choose content from several\ndocuments when producing an answer. Concretely, the top K documents are retrieved using the\nretriever, and then the generator produces a distribution for the next output token for each document,\nbefore marginalizing, and repeating the process with the following output token, Formally, we deﬁne:\npRAG-Token(y|x) ≈\nN\nY\ni\nX\nz∈top-k(p(·|x))\npη(z|x)pθ(yi|x, z, y1:i−1)\nFinally, we note that RAG can be used for sequence classiﬁcation tasks by considering the target class\nas a target sequence of length one, in which case RAG-Sequence and RAG-Token are equivalent."
+      },
+      {
+        "score": 0.7442466020584106,
+        "source": "rag_lewis_2020",
+        "section": "4.2 Abstractive Question Answering",
+        "text": "As shown in Table 2, RAG-Sequence outperforms BART on Open MS-MARCO NLG by 2.6 Bleu\npoints and 2.6 Rouge-L points. RAG approaches state-of-the-art model performance, which is\nimpressive given that (i) those models access gold passages with speciﬁc information required to\ngenerate the reference answer , (ii) many questions are unanswerable without the gold passages, and\n(iii) not all questions are answerable from Wikipedia alone. Table 3 shows some generated answers\nfrom our models. Qualitatively, we ﬁnd that RAG models hallucinate less and generate factually\ncorrect text more often than BART. Later, we also show that RAG generations are more diverse than\nBART generations (see §4.5)."
+      },
+      {
+        "score": 0.7318207621574402,
+        "source": "rag_survey_2312",
+        "section": "Required Abilities",
+        "text": "standardized approach for\nquantifying RAG evaluation aspects. Custom metrics tailored\nto the nuances of RAG models, though not included here, have\nalso been developed in some evaluation studies.\nD."
+      },
+      {
+        "score": 0.7285285592079163,
+        "source": "rag_survey_2312",
+        "section": "Task and Evaluation",
+        "text": "G models across diverse\napplication scenarios.This chapter will mainly introduce the\nmain downstream tasks of RAG, datasets, and how to evaluate\nRAG systems.\nA."
+      },
+      {
+        "score": 0.7271062135696411,
+        "source": "rag_lewis_2020",
+        "section": "2.5 Decoding",
+        "text": "At test time, RAG-Sequence and RAG-Token require different ways to approximate arg maxy p(y|x).\nRAG-Token\nThe RAG-Token model can be seen as a standard, autoregressive seq2seq genera-\ntor with transition probability: p′\nθ(yi|x, y1:i−1) = P\nz∈top-k(p(·|x)) pη(zi|x)pθ(yi|x, zi, y1:i−1) To\ndecode, we can plug p′\nθ(yi|x, y1:i−1) into a standard beam decoder.\nRAG-Sequence\nFor RAG-Sequence, the likelihood p(y|x) does not break into a conventional per-\ntoken likelihood, hence we cannot solve it with a single beam search. Instead, we run beam search for\neach document z, scoring each hypothesis using pθ(yi|x, z, y1:i−1). This yields a set of hypotheses\nY , some of which may not have appeared in the beams of all documents. To estimate the probability\nof an hypothesis y we run an additional forward pass for each document z for which y does not\nappear in the beam, multiply generator probability with pη(z|x) and then sum the probabilities across\nbeams for the marginals. We refer to this decoding procedure as “Thorough Decoding.” For longer\noutput sequences, |Y | can become large, requiring many forward passes. For more efﬁcient decoding,\nwe can make a further approximation that pθ(y|x, zi) ≈0 where y was not generated during beam\nsearch from x, zi. This avoids the need to run additional forward passes once the candidate set Y has\nbeen generated. We refer to this decoding procedure as “Fast Decoding.”"
+      }
+    ],
+    "answer_cloud": "# Difference Between RAG-Sequence and RAG-Token Models\n\nBased on the context provided, here are the key differences:\n\n## Document Retrieval Strategy\n\n**RAG-Sequence:**\n- Uses the **same retrieved document** to generate the complete output sequence\n- Treats the retrieved document as a single latent variable that is marginalized across the top-K documents\n- All tokens in the output sequence come from the same document\n\n**RAG-Token:**\n- Can draw a **different latent document for each target token**\n- Allows the generator to choose content from **several different documents** when producing an answer\n- Retrieves top-K documents once, then for each output token position, selects from among those documents\n\n## Mathematical Formulation\n\n- **RAG-Sequence** marginalizes over documents first, then generates all tokens: ∑_z p_η(z|x) ∏_i p_θ(y_i|x, z, y_{1:i-1})\n\n- **RAG-Token** marginalizes over documents at each token step: ∏_i ∑_z p_η(z|x) p_θ(y_i|x, z, y_{1:i-1})\n\n## Decoding Differences\n\n- **RAG-Token** can use standard beam search decoding\n- **RAG-Sequence** requires special \"Thorough Decoding\" or \"Fast Decoding\" procedures since the likelihood doesn't break into per-token probabilities",
+    "cloud_time": 6.66
+  },
+  {
+    "question": "What are the three RAG paradigms described in the RAG survey?",
+    "chunks_found": 5,
+    "answer_local": "The RAG survey describes three RAG paradigms:\n\n1. Naive RAG - The earliest methodology, which gained prominence shortly after the standardized approach for quantifying RAG evaluation aspects.\n\n2. Advanced RAG and Modular RAG are mentioned as responses to specific shortcomings in Naive RAG.",
+    "local_time": 3.1,
+    "chunks": [
+      {
+        "score": 0.8004801273345947,
+        "source": "rag_survey_2312",
+        "section": "Introduction",
+        "text": "hree stages: Naive RAG, Advanced\nRAG, and Modular RAG, as showed in Figure 3. Despite\nRAG method are cost-effective and surpass the performance\nof the native LLM, they also exhibit several limitations.\nThe development of Advanced RAG and Modular RAG is\na response to these specific shortcomings in Naive RAG.\nA. Naive RAG\nThe Naive RAG research paradigm represents the earli-\nest methodology, which gained prominence shortly after the"
+      },
+      {
+        "score": 0.7933556437492371,
+        "source": "rag_survey_2312",
+        "section": "Required Abilities",
+        "text": "standardized approach for\nquantifying RAG evaluation aspects. Custom metrics tailored\nto the nuances of RAG models, though not included here, have\nalso been developed in some evaluation studies.\nD."
+      },
+      {
+        "score": 0.7830784320831299,
+        "source": "rag_survey_2312",
+        "section": "Evaluation Aspects",
+        "text": "Contemporary evaluation practices of RAG models empha-\nsize three primary quality scores and four essential abilities,\nwhich collectively inform the evaluation of the two principal\ntargets of the RAG model: retrieval and generation.\n1)"
+      },
+      {
+        "score": 0.776102602481842,
+        "source": "rag_survey_2312",
+        "section": "Discussion and Future Prospects",
+        "text": "arks collectively form\na robust framework for the systematic evaluation of RAG\nmodels, as summarized in Table IV.\nVII. DISCUSSION AND FUTURE PROSPECTS\nDespite the considerable progress in RAG technology, sev-\neral challenges persist that warrant in-depth research.This\nchapter will mainly introduce the current challenges and future\nresearch directions faced by RAG.\nA."
+      },
+      {
+        "score": 0.7750626802444458,
+        "source": "rag_survey_2312",
+        "section": "Conclusion",
+        "text": "16\nFig. 6. Summary of RAG ecosystem\ninitial learning curve. 3) Specialization - optimizing RAG to\nbetter serve production environments.\nThe mutual growth of RAG models and their technology\nstacks is evident; technological advancements continuously\nestablish new standards for existing infrastructure. In turn,\nenhancements to the technology stack drive the development\nof RAG capabilities. RAG toolkits are converging into a\nfoundational technology stack, laying the groundwork for\nadvanced enterprise applications. However, a fully integrated,\ncomprehensive platform concept is still in the future, requiring\nfurther innovation and development.\nF. Multi-modal RAG\nRAG\nhas\ntranscended\nits\ninitial\ntext-based\nquestion-\nanswering confines, embracing a diverse array of modal data.\nThis expansion has spawned innovative multimodal models\nthat integrate RAG concepts across various domains:\nImage. RA-CM3 [176] stands as a pioneering multimodal\nmodel of both retrieving and generating text and images.\nBLIP-2 [177] leverages frozen image encoders alongside\nLLMs for efficient visual language pre-training, enabling zero-\nshot image-to-text conversions. The “Visualize Before You\nWrite” method [178] employs image generation to steer the\nLM’s text generation, showing promise in open-ended text\ngeneration tasks.\nAudio and Video. The GSS method retrieves and stitches\ntogether audio clips to convert machine-translated data into\nspeech-translated data [179]. UEOP marks a significant ad-\nvancement in end-"
+      }
+    ],
+    "answer_cloud": "Based on the provided context, the three RAG paradigms described in the RAG survey are:\n\n1. **Naive RAG** - The earliest methodology that gained prominence shortly after RAG was introduced\n2. **Advanced RAG** - Developed as a response to specific shortcomings in Naive RAG\n3. **Modular RAG** - Also developed to address limitations in Naive RAG\n\nThe context indicates that these three stages represent the progression of RAG methodology, with Advanced RAG and Modular RAG being improvements over the initial Naive RAG approach.",
+    "cloud_time": 1.54
+  },
+  {
+    "question": "What chunking strategies are commonly used in RAG pipelines?",
+    "chunks_found": 5,
+    "answer_local": "Commonly used chunking strategies in RAG pipelines include those that allow independent optimization of each step while accounting for cross-component interactions, such as advanced chunking methods and hybrid search strategies. An example of a hybrid approach is the Hybrid with HyDE method which integrates both sparse and dense retrieval to capture relevant documents from both lexical and semantic perspectives.",
+    "local_time": 7.81,
+    "chunks": [
+      {
+        "score": 0.7291814088821411,
+        "source": "rag_survey_2312",
+        "section": "Introduction",
+        "text": "hree stages: Naive RAG, Advanced\nRAG, and Modular RAG, as showed in Figure 3. Despite\nRAG method are cost-effective and surpass the performance\nof the native LLM, they also exhibit several limitations.\nThe development of Advanced RAG and Modular RAG is\na response to these specific shortcomings in Naive RAG.\nA. Naive RAG\nThe Naive RAG research paradigm represents the earli-\nest methodology, which gained prominence shortly after the"
+      },
+      {
+        "score": 0.7257457375526428,
+        "source": "rag_survey_2404",
+        "section": "9.2 System Efficiency",
+        "text": "these models or developing\nretrieval pruning techniques that reduce the number of documents passed to the generation phase\nwithout sacrificing performance [145].\nModular Workflow Optimization. The complexity of RAG systems often stems from interde-\npendencies between components like chunking strategies, embedding models, and re-ranking\nalgorithms. Modular designs that enable independent optimization of each step while accounting\nfor cross-component interactions are key to enhancing system throughput [39]. Advanced chunking\nmethods and hybrid search strategies could offer trade-offs that maximize both retrieval precision\nand speed. An example is the Hybrid with HyDE [139] approach, which integrates both sparse and\ndense retrieval to capture relevant documents from both lexical and semantic perspectives."
+      },
+      {
+        "score": 0.7119852304458618,
+        "source": "rag_survey_2404",
+        "section": "4.2 Retrieval Strategy",
+        "text": "The retrieval strategies within RAG are vital for customizing the retrieval process to specific appli-\ncation needs, with each strategy offering distinct advantages and addressing particular challenges.\nIn RAG, it is mostly the utilization of retrieval techniques rather than the exploration of retrieval\nalgorithms that is involved, so it is the strategy of retrieval that is usually considered in searching\nand ranking. While basic RAGs are usually single-hop searches, i.e., they are retrieved only once\nas generated supplementary material, today’s RAGs are mostly multi-hop searches, i.e., they are\nsearched several times through different search strategies until they are satisfied. In terms of\npractical applications these strategies belong to the design on the engineering pipeline. Figure 4\nshows a typical case of the RAG framework with iterative retrieval strategy. There are five main\nretrieval strategies in RAG:\nBasic Retrieval Strategy. Basic retrieval strategies typically follow a linear workflow, moving\nsequentially through pre-retrieval, retrieval, post-retrieval, and generation phases. The Atlas [94]\nframework exemplifies this straightforward approach, guiding the retrieval process efficiently from\nstart to finish without iterations or complex conditional modifications. REPLUG [122] similarly\nfollows this basic strategy, augmenting black-box language models with retrieval in a simple\nmanner, where the retrieved information is directly used to enhance the generation proces"
+      },
+      {
+        "score": 0.705305278301239,
+        "source": "rag_survey_2404",
+        "section": "2 RAG Framework",
+        "text": "and generation components. This involves conducting\nseveral rounds of retrieval to refine the accuracy of the information retrieved and iteratively\nimprove the quality of the generated output. Toolkits such as LangChain1 and LlamaIndex2 have\nmodularized the RAG approach, enhancing its adaptability and expanding its range of applications.\nDespite these toolkits employing diverse methodologies to tackle different aspects of RAG—from\nmultiple search iterations to iterative generation—they maintain adherence to the fundamental\nRAG workflow. This consistency is crucial for understanding their operation and pinpointing\nopportunities for further development."
+      },
+      {
+        "score": 0.6987476348876953,
+        "source": "rag_survey_2312",
+        "section": "Naive RAG",
+        "text": ", Advanced\nRAG, and Modular RAG, as showed in Figure 3. Despite\nRAG method are cost-effective and surpass the performance\nof the native LLM, they also exhibit several limitations.\nThe development of Advanced RAG and Modular RAG is\na response to these specific shortcomings in Naive RAG.\nA. Naive RAG\nThe Naive RAG research paradigm represents the earli-\nest methodology, which gained prominence shortly after the\n3\nFig. 2. A representative instance of the RAG process applied to question answering. It mainly consists of 3 steps. 1) Indexing. Documents are split into chunks,\nencoded into vectors, and stored in a vector database. 2) Retrieval. Retrieve the Top k chunks most relevant to the question based on semantic similarity. 3)\nGeneration. Input the original question and the retrieved chunks together into LLM to generate the final answer.\nwidespread adoption of ChatGPT. The Naive RAG follows\na traditional process that includes indexing, retrieval, and\ngeneration, which is also characterized as a “Retrieve-Read”\nframework [7].\nIndexing starts with the cleaning and extraction of raw data\nin diverse formats like PDF, HTML, Word, and Markdown,\nwhich is then converted into a uniform plain text format. To\naccommodate the context limitations of language models, text\nis segmented into smaller, digestible chunks. Chunks are then\nencoded into vector representations using an embedding model\nand stored in vector database. This step is crucial for enabling\nefficient similarity searches in the"
+      }
+    ],
+    "answer_cloud": "I don't know.\n\nWhile the provided context mentions chunking and chunking strategies in relation to RAG systems, it does not provide specific details about what chunking strategies are commonly used. \n\nThe context only references that:\n- Text is segmented into smaller chunks during the indexing phase\n- \"Advanced chunking methods\" exist and could offer trade-offs for retrieval precision and speed\n- Chunking strategies are mentioned as one of the components in modular RAG designs\n\nHowever, the actual chunking strategies themselves are not described or listed in the provided context.",
+    "cloud_time": 2.23
+  },
+  {
+    "question": "What is the role of the retriever in a RAG system?",
+    "chunks_found": 5,
+    "answer_local": "In a RAG (Retrieval-Augmented Generation) system, the retriever plays a central component. It is responsible for retrieving relevant knowledge or information from an external source to assist the generator in generating more accurate and contextually appropriate responses. Specifically, the table provided highlights that while many systems still rely on traditional retrieval methods like BM25, efficient models are also employed as generators. This indicates the importance of a strong retriever system which can effectively provide relevant data or information for the generator to use when producing its output.",
+    "local_time": 9.18,
+    "chunks": [
+      {
+        "score": 0.732556939125061,
+        "source": "rag_survey_2312",
+        "section": "Retrieval Source",
+        "text": "RAG relies on external knowledge to enhance LLMs, while\nthe type of retrieval source and the granularity of retrieval\nunits both affect the final generation results.\n1)"
+      },
+      {
+        "score": 0.702961802482605,
+        "source": "rag_survey_2312",
+        "section": "Evaluation Aspects",
+        "text": "Contemporary evaluation practices of RAG models empha-\nsize three primary quality scores and four essential abilities,\nwhich collectively inform the evaluation of the two principal\ntargets of the RAG model: retrieval and generation.\n1)"
+      },
+      {
+        "score": 0.7013431787490845,
+        "source": "rag_survey_2404",
+        "section": "8.2 Retriever and Generator",
+        "text": "In RAG, the retriever and generator are central components, each playing a distinct role in the\nsystem’s overall performance. Table 3 summarizes the retrievers and generators used across the\nstudies discussed in this paper. The table reveals that while a wide range of advanced language\nmodels are employed as generators, many systems still rely on traditional retrievers like BM25,\nvalued for their efficiency. This highlights the continued importance of optimizing retrieval methods\nwhile balancing computational demands. Interestingly, despite the availability of powerful models\nsuch as LLaMA2, GPT-3.5, and GPT-4, these are not widely adopted as generators. Instead, models\nlike T5 remain prevalent, while more foundational retrieval approaches, such as those based on\nBERT, see limited use. The relative scarcity of IR-focused LLMs in retrievers suggests a promising\navenue for future research and development in this domain.\n, Vol. 1, No. 1, Article . Publication date: August 2018.\n24\nHuang et al.\nCorpus\nRetriever\nMirage Benchmark Dataset\nAverage\nMMLU-Med\nMedQA-US\nMedMCQA\nPubMedQA*\nBioASQ-Y/N\nNone\nNone\n72.91 ± 1.35\n65.04 ± 1.34\n55.25 ± 0.77\n36.00 ± 2.15\n74.27 ± 1.76\n60.69\nPubMed\n(23.9M)\nBM25\n72.27 ± 1.36\n63.71 ± 1.35\n55.49 ± 0.77\n66.20 ± 2.12\n88.51 ± 1.28\n69.23\nContriever\n71.72 ± 1.36\n63.94 ± 1.35\n54.29 ± 0.77\n65.60 ± 2.12\n85.44 ± 1.42\n68.20\nSPECTER\n73.19 ± 1.34\n65.20 ± 1.34\n53.12 ± 0.77\n54.80 ± 2.23\n75.73 ± 1.72\n64.41\nMedCPT\n73.09 ± 1.34\n66.69 ± 1.32\n54.94 ± 0.77\n66.40 ± 2.11\n85.76"
+      },
+      {
+        "score": 0.7002179622650146,
+        "source": "rag_survey_2404",
+        "section": "9.3 Multimodal RAG",
+        "text": "ies. Extending\nretrieval capabilities to include more diverse media types, such as video and speech, also represents\na promising direction for the continued evolution of RAG systems."
+      },
+      {
+        "score": 0.6977254152297974,
+        "source": "rag_survey_2312",
+        "section": "Discussion and Future Prospects",
+        "text": "arks collectively form\na robust framework for the systematic evaluation of RAG\nmodels, as summarized in Table IV.\nVII. DISCUSSION AND FUTURE PROSPECTS\nDespite the considerable progress in RAG technology, sev-\neral challenges persist that warrant in-depth research.This\nchapter will mainly introduce the current challenges and future\nresearch directions faced by RAG.\nA."
+      }
+    ],
+    "answer_cloud": "Based on the provided context, the retriever in a RAG system plays a central role as one of the two principal components (along with the generator). Specifically:\n\n1. **Core Function**: The retriever is responsible for retrieving external knowledge to enhance the LLM's generation capabilities.\n\n2. **Performance Impact**: The type of retriever used significantly affects the overall performance of the RAG system. The context notes that many systems rely on traditional retrievers like BM25 (valued for their efficiency), while others use more advanced approaches like Contriever, SPECTER, and MedCPT.\n\n3. **Importance**: The context emphasizes \"the continued importance of optimizing retrieval methods while balancing computational demands,\" indicating that the retriever's effectiveness is crucial to RAG system performance.\n\nThe retriever essentially acts as the knowledge acquisition component, fetching relevant information from external sources that the generator then uses to produce enhanced responses.",
+    "cloud_time": 2.98
+  },
+  {
+    "question": "How does reranking improve RAG quality?",
+    "chunks_found": 5,
+    "answer_local": "Reranking improves the quality of RAG systems by prioritizing documents that are most likely to contribute meaningfully to the final output. This is achieved through various strategies such as unsupervised techniques, supervised learning, and data augmentation. These methods aim to optimize the alignment between retrieved content and the desired response, thereby enhancing the overall effectiveness of RAG systems. By doing so, reranking ensures that only relevant and high-quality documents are retained in the final output, leading to more precise and informative results.",
+    "local_time": 11.63,
+    "chunks": [
+      {
+        "score": 0.7505276203155518,
+        "source": "rag_survey_2312",
+        "section": "Reranking",
+        "text": ": Reranking fundamentally reorders document\nchunks to highlight the most pertinent results first, effectively\nreducing the overall document pool, severing a dual purpose\nin information retrieval, acting as both an enhancer and a\nfilter, delivering refined inputs for more precise language\nmodel processing [70]. Reranking can be performed using\nrule-based methods that depend on predefined metrics like\nDiversity, Relevance, and MRR, or model-based approaches\nlike Encoder-Decoder models from the BERT series (e.g.,\nSpanBERT), specialized reranking models such as Cohere\nrerank or bge-raranker-large, and general large language mod-\nels like GPT [12], [99].\n2)"
+      },
+      {
+        "score": 0.7294174432754517,
+        "source": "rag_survey_2404",
+        "section": "5.2 Filtering",
+        "text": "Filtering and re-ranking are distinct processes in the post-retrieval stage of RAG systems. Filtering\nfocuses on eliminating irrelevant or low-quality documents from the retrieved set, thereby reducing\nthe document set size and improving efficiency and effectiveness in subsequent processing. In\ncontrast, re-ranking orders the remaining documents based on their relevance or utility for the task,\noften prioritizing those that enhance the quality of the generated output, especially in response-\naware scenarios.\nSeveral filtering methods have been developed to refine document sets in RAG systems, each\nwith unique mechanisms but sharing common goals of improving relevance and reducing compu-\ntational load. Self-RAG [4] employs a self-reflection mechanism, utilizing special “reflection tokens”\n, Vol. 1, No. 1, Article . Publication date: August 2018.\nThe Survey of Retrieval-Augmented Text Generation in Large Language Models\n17\ngenerated by the model to evaluate the relevance and quality of retrieved passages and the model’s\nown generated outputs. This self-reflection ensures that only the most pertinent documents are\nretained, leveraging the model’s internal capabilities without relying on external models during\ninference. Similarly, BlendFilter [135] utilizes the LLM itself as the filter, assessing and removing\nirrelevant or less useful documents by applying filtering separately to knowledge retrieved from\noriginal, externally augmented, and internally augmented queries. Both Self"
+      },
+      {
+        "score": 0.7190398573875427,
+        "source": "rag_survey_2404",
+        "section": "5 Post-Retrieval",
+        "text": "5.1\nRe-Ranking\nAs retrieval mechanisms often return a large number of potentially relevant documents, re-ranking\nmethods are employed to reorder these documents, prioritizing those most likely to contribute\nmeaningfully to the final output. By leveraging various strategies, including unsupervised tech-\nniques, supervised learning, and data augmentation, re-ranking aims to optimize the alignment\nbetween the retrieved content and the desired response, thereby improving the overall effectiveness\nof RAG systems [165].\nUnsupervised Re-ranking. Unsupervised re-rankers do not rely on labeled data for training. They\nuse strategies such as pointwise, listwise, or pairwise methods to rank documents based on LLM\noutputs without the need for supervised fine-tuning. For example, In-Context RALM [112] employs\n, Vol. 1, No. 1, Article . Publication date: August 2018."
+      },
+      {
+        "score": 0.6938672661781311,
+        "source": "rag_survey_2404",
+        "section": "5.1 Re-Ranking",
+        "text": "As retrieval mechanisms often return a large number of potentially relevant documents, re-ranking\nmethods are employed to reorder these documents, prioritizing those most likely to contribute\nmeaningfully to the final output. By leveraging various strategies, including unsupervised tech-\nniques, supervised learning, and data augmentation, re-ranking aims to optimize the alignment\nbetween the retrieved content and the desired response, thereby improving the overall effectiveness\nof RAG systems [165].\nUnsupervised Re-ranking. Unsupervised re-rankers do not rely on labeled data for training. They\nuse strategies such as pointwise, listwise, or pairwise methods to rank documents based on LLM\noutputs without the need for supervised fine-tuning. For example, In-Context RALM [112] employs\n, Vol. 1, No. 1, Article . Publication date: August 2018.\n16\nHuang et al.\na zero-shot approach where an off-the-shelf language model is used to re-rank the top-k documents\nretrieved by a BM25 retriever. This process involves selecting the document that maximizes the\nlikelihood of the generated text, effectively using the LM’s semantic understanding to improve\ndocument relevance without requiring additional supervised training. The paper also explores\ntraining a dedicated re-ranker using self-supervised learning to further enhance the selection of\nrelevant documents, demonstrating that training a re-ranker with domain-specific data can be\nmore effective than zero-shot re-ranking.\nSupervised Re-rankin"
+      },
+      {
+        "score": 0.6898894906044006,
+        "source": "rag_survey_2312",
+        "section": "Hybrid Approaches ",
+        "text": "Combining RAG with fine-tuning is emerging as a leading\nstrategy. Determining the optimal integration of RAG and\nfine-tuning whether sequential, alternating, or through end-to-\nend joint training—and how to harness both parameterized\n15\nTABLE IV\nSUMMARY OF EVALUATION FRAMEWORKS\nEvaluation Framework\nEvaluation Targets\nEvaluation Aspects\nQuantitative Metrics\nRGB†\nRetrieval Quality\nGeneration Quality\nNoise Robustness\nNegative Rejection\nInformation Integration\nCounterfactual Robustness\nAccuracy\nEM\nAccuracy\nAccuracy\nRECALL†\nGeneration Quality\nCounterfactual Robustness\nR-Rate (Reappearance Rate)\nRAGAS‡\nRetrieval Quality\nGeneration Quality\nContext Relevance\nFaithfulness\nAnswer Relevance\n*\n*\nCosine Similarity\nARES‡\nRetrieval Quality\nGeneration Quality\nContext Relevance\nFaithfulness\nAnswer Relevance\nAccuracy\nAccuracy\nAccuracy\nTruLens‡\nRetrieval Quality\nGeneration Quality\nContext Relevance\nFaithfulness\nAnswer Relevance\n*\n*\n*\nCRUD†\nRetrieval Quality\nGeneration Quality\nCreative Generation\nKnowledge-intensive QA\nError Correction\nSummarization\nBLEU\nROUGE-L\nBertScore\nRAGQuestEval\n† represents a benchmark, and ‡ represents a tool. * denotes customized quantitative metrics, which deviate from traditional\nmetrics. Readers are encouraged to consult pertinent literature for the specific quantification formulas associated with these\nmetrics, as required.\nand non-parameterized advantages are areas ripe for explo-\nration [27]. Another trend is to introduce SLMs with specific\nfunctionalities into RA"
+      }
+    ],
+    "answer_cloud": "# How Reranking Improves RAG Quality\n\nBased on the provided context, reranking improves RAG quality in several key ways:\n\n1. **Reorders and Prioritizes Documents**: Reranking reorders document chunks to highlight the most pertinent results first, prioritizing those most likely to contribute meaningfully to the final output.\n\n2. **Reduces Document Pool**: By effectively reducing the overall document pool, reranking serves a dual purpose as both an enhancer and a filter, delivering refined inputs for more precise language model processing.\n\n3. **Optimizes Alignment**: Reranking aims to optimize the alignment between retrieved content and the desired response, thereby improving the overall effectiveness of RAG systems.\n\n4. **Improves Efficiency and Effectiveness**: By filtering out less relevant documents and reordering the remaining ones based on relevance or utility, reranking improves efficiency in subsequent processing and enhances the quality of generated outputs.\n\n5. **Multiple Implementation Options**: Reranking can be performed using various approaches—rule-based methods (using metrics like Diversity, Relevance, and MRR), model-based approaches (such as BERT-based models, specialized reranking models like Cohere rerank, or large language models like GPT)—allowing optimization for different use cases.",
+    "cloud_time": 4.29
+  }
+]
