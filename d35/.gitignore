@@ -1,0 +1,25 @@
+.env
+.venv/
+/data/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.idea/
+*.iml
+
+# Local platform state
+android/local.properties
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+macos/Flutter/ephemeral/
+.DS_Store
